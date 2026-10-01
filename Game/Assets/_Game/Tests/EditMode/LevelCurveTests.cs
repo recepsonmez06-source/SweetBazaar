@@ -25,6 +25,15 @@ namespace SweetBazaar.Core.Tests
         }
 
         [Test]
+        public void NoLevel_UsesMoreCandyTypesThanTheArtBudget()
+        {
+            for (int level = 1; level <= 1000; level++)
+                Assert.LessOrEqual(LevelCurve.GetProfile(level).CandyTypes, LevelCurve.MaxCandyTypes, $"level {level}");
+
+            Assert.AreEqual(LevelCurve.MaxCandyTypes, LevelCurve.GetProfile(1000).CandyTypes);
+        }
+
+        [Test]
         public void HardLevel_IsFollowedByABreather()
         {
             for (int hard = 10; hard <= 200; hard += 5)

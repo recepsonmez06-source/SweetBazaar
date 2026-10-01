@@ -73,15 +73,30 @@ Bölüm üretici (2026-10-01, `Scripts/Core`: `LevelGenerator`, `LevelCurve`, `D
   Aynı bölüm numarası her zaman aynı bölümü verir (kendi tohumlu rastgele sayı üretecimiz kullanılır).
 - **Zorluk ölçütü:** Çözücünün bulduğu en az hamle sayısı, çeşit sayısı, boş kutu sayısı.
 - **İlk taslak eğri** (tek yerde ayarlanır: `LevelCurve.cs`): 1–5 öğretici (2 çeşit, 3 boş kutu, kısa çözüm);
-  6–20: 4→6 çeşit; 21–50: 6→9; 51+: 8→12 çeşit; hep 2 boş kutu. Dalga: her 5. bölüm zor (+1 çeşit, daha uzun
-  çözüm şartı), ondan sonraki bölüm rahatlatıcı (−1 çeşit).
-- **Ölçüm (editörde):** İlk 120 bölümün hepsi üretildi (en az hamle 4 → yaklaşık 40). Bir bölüm 0 ms ile 10 sn arası
-  sürdü, üst uçta 12–13 çeşitte birkaç saniye; bu yüzden **bölümler oyun içinde üretilmez, önceden üretilip
-  JSON dosyası olarak oyuna konur.** Böylece bölümler sabitlenir ve üretici sonradan değişse de yayındaki bölümler değişmez.
+  6–20: 4→6 çeşit; 21–50: 6→9; 51+: 8→10 çeşit; hep 2 boş kutu. Dalga: her 5. bölüm zor (+1 çeşit, daha uzun
+  çözüm şartı), ondan sonraki bölüm rahatlatıcı (−1 çeşit). **Hiçbir bölüm 10'dan fazla lokum çeşidi kullanmaz**
+  (görsel bütçesi; sınıfın ortak uygulaması 8–12 renk).
+- **Ölçüm (editörde):** Bir bölümün üretimi 0 ms ile birkaç sn arası sürüyor; bu yüzden **bölümler oyun içinde
+  üretilmez, önceden üretilip JSON dosyası olarak oyuna konur.** Böylece bölümler sabitlenir ve üretici sonradan
+  değişse de yayındaki bölümler değişmez.
+
+Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
+
+- Biçim sürümü 1; her satırda bir bölüm (numara, tohum, kutu kapasitesi, en az hamle, kutuların içeriği alttan üste).
+  Oyun bunu `Resources.Load<TextAsset>("Levels/levels")` ile okuyacak; okuma/yazma kodu `Core` içinde (`LevelPackJson`).
+- **Üretme:** `powershell -File tools\build-levels.ps1 [-Count 200] [-Rebuild]`. Varsayılan **yalnızca ekler**:
+  dosyadaki bölümlere dokunmaz, eksik numaraları üretir. `-Rebuild` tüm bölümleri değiştirir; yalnızca yayından
+  önce veya bilerek kullanılır. Unity içinden: menü *Sweet Bazaar > Build Level Pack*.
+- **Doğrulama:** Testler dosyayı okur, her bölümü geçerlilik açısından denetler, örnek bölümleri çözücüyle yeniden çözer.
+  Tam doğrulama (hepsini çözme, ~3 dk): `tools\run-tests.ps1 -Filter AllLevels_AreSolvable`.
+- **Durum (2026-10-01):** 200 bölüm üretildi ve hepsinin çözülebildiği, kayıtlı en kısa hamle sayısının doğru olduğu
+  tam doğrulamayla görüldü. Çeşit ve en az hamle: 1–5: 2 çeşit, 4–7 hamle (ort. 5); 6–20: 3–6, 8–20 (ort. 13);
+  21–50: 5–9, 13–29 (ort. 21); 51–100: 7–10, 21–33 (ort. 27); 101–200: 9–10, 24–34 (ort. 30).
 - **Bilinen sınırlar:** (1) 1 boş kutulu rastgele tahtaların çoğu çözümsüz çıktı (8 denemenin 1'i kabul edildi);
   daha zor bölümler için "karıştırma" yerine çözümden geriye doğru kurma gibi başka bir yöntem gerekebilir.
-  (2) Taslak eğri 13 çeşide kadar çıkıyor; oyunda o kadar farklı lokum görseli gerekir ya da eğri sınırlanmalı.
-  (3) Zorluk sayıları tahmindir; oynayarak ayarlanacak.
+  (2) Çeşit sayısı 10 ile sınırlı olduğundan zorluk yaklaşık 65. bölümden sonra platoya giriyor (en az hamle
+  ortalama ~30, zor bölümler ~31–33, rahatlatıcılar ~25); daha ileri zorluk bu belgenin 5. bölümündeki yeni
+  mekaniklerden (kapalı/kilitli kutu) gelmeli. (3) Zorluk sayıları tahmindir; oynayarak ayarlanacak.
 
 ## 6. Elde tutma katmanı: Dükkânın büyümesi (taslak)
 

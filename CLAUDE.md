@@ -47,6 +47,8 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - **Testleri çalıştırma:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-tests.ps1`
   (çıkış kodu 0 = hepsi geçti, 2 = test hatası). Sonuç ve log: `%TEMP%\SweetBazaar-tests\`.
   `-Filter <ad>` yalnızca eşleşen testleri çalıştırır; ölçüm testi: `-Filter SolverBenchmark` (çıktı sonuç XML'inde).
+- **Bölüm dosyası üretme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-levels.ps1 [-Count 200] [-Rebuild]`
+  (editör kapalıyken). Varsayılan yalnızca ekler; `-Rebuild` yayındaki bölümleri değiştirir, kullanıcıya sormadan kullanma.
 - Kod yapısı: `Game/Assets/_Game/Scripts/Core` (saf mantık, Unity'ye erişemez), `Scripts/Game`
   (Unity tarafı), `Tests/EditMode` (testler). Ayrıntı: `docs/TASARIM.md` bölüm 12.
 - Android paket adı: `com.gameworld.sweetbazaar`; ekran dikey kilitli.
@@ -110,6 +112,8 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Çözücü (B): `Solver.Solve` (BFS, en kısa çözüm, durum üst sınırı) + testler. Ölçüm (rastgele tahta, 2 boş kutu,
   editörde): 10 çeşitte 12–57 bin durum, 0,6–3,6 sn. Az boş kutulu/zor tahtalar henüz ölçülmedi.
 - [x] Bölüm üretici (C): `LevelGenerator` + `LevelCurve` (taslak zorluk eğrisi) + testler; ilk 120 bölüm üretildi (bkz. TASARIM.md bölüm 5)
-- [ ] JSON bölüm dosyaları (D): bölümleri önceden üretip kaydetme ve okuma
-- [ ] Açık: eğri 13 çeşide çıkıyor (görsel sayısı); 1 boş kutulu zor bölümler için başka üretim yöntemi gerekebilir
+- [x] JSON bölüm dosyaları (D): `LevelPackJson` + `tools\build-levels.ps1`; 200 bölüm üretildi ve tam doğrulandı
+  (`Resources/Levels/levels.json`, yalnızca ekleyen üretim). Lokum çeşidi en çok 10.
+- [ ] Açık: 1 boş kutulu zor bölümler için başka üretim yöntemi; ~65. bölümden sonra zorluk platosu (yeni mekanik gerekir)
+- [ ] Unity tarafı (E): tahta görünümü, dokunma girişi, animasyonlar, ilk oynanabilir ekran
 - [ ] İlk oynanabilir ekran

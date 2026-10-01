@@ -38,8 +38,12 @@ namespace SweetBazaar.Core
             new Stage(firstLevel: 1,  minTypes: 2, maxTypes: 3,  rampLevels: 5,  emptyBoxes: 3, maxMovesPerType: 4),
             new Stage(firstLevel: 6,  minTypes: 4, maxTypes: 6,  rampLevels: 15, emptyBoxes: 2, maxMovesPerType: 0),
             new Stage(firstLevel: 21, minTypes: 6, maxTypes: 9,  rampLevels: 30, emptyBoxes: 2, maxMovesPerType: 0),
-            new Stage(firstLevel: 51, minTypes: 8, maxTypes: 12, rampLevels: 50, emptyBoxes: 2, maxMovesPerType: 0),
+            new Stage(firstLevel: 51, minTypes: 8, maxTypes: 10, rampLevels: 50, emptyBoxes: 2, maxMovesPerType: 0),
         };
+
+        // Art budget: no level uses more candy types than this. Beyond it, difficulty is meant to come from
+        // new mechanics (closed / locked boxes, docs/TASARIM.md section 5), not from ever more candy types.
+        public const int MaxCandyTypes = 10;
 
         private const int TutorialLevels = 5;
         private const int WavePeriod = 5;
@@ -79,6 +83,8 @@ namespace SweetBazaar.Core
                     types = Math.Max(MinTypesAfterBreather, types - 1);
                 }
             }
+
+            types = Math.Min(types, MaxCandyTypes);
 
             return new DifficultyProfile
             {
