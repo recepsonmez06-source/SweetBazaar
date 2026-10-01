@@ -29,6 +29,20 @@ Durum: İlk taslak. "Taslak" olarak işaretli maddeler kullanıcıyla henüz kes
 - Tüm çeşitler paketlenince bölüm kazanılır.
 - Geçerli hamle kalmazsa oyuncu takılmış olur: geri al, ekstra kutu veya yeniden başla seçenekleri.
 
+Kesinleşen kural ayrıntıları (2026-10-01, `Scripts/Core` içinde kodlandı ve testlendi):
+
+- **Kısmi taşıma var:** Kaynağın üstündeki aynı çeşit lokumlar birlikte taşınır; hedefte yer azsa
+  sığan kadarı taşınır, kalanı kaynakta durur. Oyuncu taşınacak sayıyı seçmez.
+- **"Takıldın" yalnızca geçerli hamle kalmayınca** gösterilir. Hamle varken çözümsüz duruma girilmesi
+  şimdilik algılanmaz; ileride çözücüyle geliştirilebilir.
+- **Kapalı (paketlenmiş) kutu donar:** Ne kaynak ne hedef olabilir; kazanmada sayılır.
+- **Kazanma:** Her kutu ya boştur ya da kapalıdır.
+- Başlangıçta zaten dolu ve tek çeşitli kutu kapalı sayılır (üretici bunu üretmeyecek).
+- Aynı kutuya hamle geçersizdir (ekranda "seçimi iptal et" anlamına gelir).
+- Geri alma mantık katmanında sınırsızdır; geri alma ve ekstra kutu hakkının sınırı ile reklam bağlantısı oyun katmanında olacak.
+- Bilinen sınır: Hamlenin hiçbir şey değiştirmediği "boşa" hamleler (ör. tek çeşitli, dolu olmayan bir kutuyu
+  boş kutuya taşımak) geçerlidir. Çözücü bunları eleyecek; oyuncu açısından "takıldı" sayılmaz.
+
 ## 4. Lokum çeşitleri ve erişilebilirlik
 
 - Her çeşit **hem renkle hem de görsel bir ayrıntıyla** ayırt edilir (renk körü oyuncular için):

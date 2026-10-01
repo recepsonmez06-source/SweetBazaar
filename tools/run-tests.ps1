@@ -31,7 +31,10 @@ $unityArgs = @(
     '-testResults', "`"$results`"",
     '-logFile', "`"$log`""
 )
-$process = Start-Process -FilePath $unity -ArgumentList $unityArgs -Wait -PassThru
+# Not Start-Process -Wait: it also waits for helper processes Unity leaves behind (e.g. the Android ADB server).
+$process = Start-Process -FilePath $unity -ArgumentList $unityArgs -PassThru
+$null = $process.Handle   # keeps the exit code readable after the process ends
+$process.WaitForExit()
 Write-Host "Unity exit code: $($process.ExitCode)  (0 = all passed, 2 = test failures, other = error)"
 
 if (Test-Path $results) {

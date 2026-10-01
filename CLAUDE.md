@@ -99,5 +99,7 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Kod iskeleti (Core / Game / Tests) ve komut satırı test altyapısı (tools/run-tests.ps1)
 - [x] Unity projesi ve kod iskeleti GitHub'a gönderildi
 - [x] docs/KURULUM.md (ikinci bilgisayar için kurulum notları; henüz ikinci bilgisayarda denenmedi)
-- [ ] Temel oyun mantığı (kutular, hamle kuralı, kazanma kontrolü) ve testleri
+- [x] Temel oyun mantığı (A): kutu, tahta, hamle kuralı, kazanma/takılma, geri alma, LevelDefinition + 56 test
+- [ ] Çözücü (B): çözülebilirlik ve en az hamle sayısı
+- [ ] Bölüm üretici (C) ve JSON bölüm dosyaları (D)
 - [ ] İlk oynanabilir ekran
