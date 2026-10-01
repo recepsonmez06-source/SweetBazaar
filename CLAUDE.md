@@ -50,6 +50,11 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
   Oyun akışı testleri (PlayMode): `-Platform PlayMode`. Her iki grubu da çalıştır; ikisi de geçmeli.
 - **Görünümü gözle denetle:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\preview.ps1` PNG'ler üretir
   (yol çıktıda); `Read` aracıyla görüntüleyebilirsin. Görünümü değiştirdiysen mutlaka çalıştır.
+- **Android APK (telefonda deneme):** Unity menüsü *Sweet Bazaar > Build Android APK* (çıktı `Game\Builds\Android\SweetBazaar-debug.apk`,
+  depoya girmez). **Uyarı:** `tools\build-apk.ps1` ile komut satırından derleme bu bilgisayarda Gradle aşamasında
+  `java.io.IOException: Unable to establish loopback connection` ile duruyor (Unity'nin JDK 17'sinde `Pipe.open`/`Selector.open`
+  başarısız; normal soketler çalışıyor; bilgisayarda CrowdStrike Falcon var). Kullanıcının kendi Unity editöründen derlemenin
+  çalışıp çalışmadığı denenecek; çalışmazsa bulut derleme (GitHub Actions + GameCI) planı.
 - **Başka editör metodu çalıştırma:** `tools\run-editor-method.ps1 -Method <Ad.Alan.Metot> [-Graphics]`.
 - **Bölüm dosyası üretme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-levels.ps1 [-Count 200] [-Rebuild]`
   (editör kapalıyken). Varsayılan yalnızca ekler; `-Rebuild` yayındaki bölümleri değiştirir, kullanıcıya sormadan kullanma.
