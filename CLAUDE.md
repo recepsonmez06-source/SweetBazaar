@@ -89,7 +89,7 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Oyun fikri, tema ve isim belirlendi (bkz. docs/TASARIM.md)
 - [x] Git kuruldu ve yapılandırıldı
 - [x] GitHub hesabı açıldı
-- [ ] GitHub iki adımlı doğrulama (oyun dosyaları yüklenmeden önce yapılacak; kullanıcı sonra yapacak)
+- [x] GitHub iki adımlı doğrulama (2026-10-01 kullanıcı tamamladı; oyun dosyaları ondan sonra yüklendi)
 - [x] GitHub harcama bütçesi adımı gereksiz (ödeme yöntemi eklenmedi; LFS ücretsiz kotası 10 GiB depolama / 10 GiB aylık trafik)
 - [x] Oyun motoru kararı: Unity 6.3 LTS (6000.3.25f1), Android modülleri kurulu; Unity lisansı doğrulandı
 - [x] GitHub'da boş, private SweetBazaar deposu oluşturuldu
@@ -97,7 +97,7 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Depo iskeleti commit edildi ve GitHub'a gönderildi (uzak depo bağlı)
 - [x] Unity projesi oluşturuldu (Game/, Universal 2D), Android hedefi ve paket adı ayarlandı
 - [x] Kod iskeleti (Core / Game / Tests) ve komut satırı test altyapısı (tools/run-tests.ps1)
-- [ ] Unity projesi commit'lerinin GitHub'a push'u (GitHub 2FA yapıldıktan sonra)
-- [ ] docs/KURULUM.md (ikinci bilgisayar için kurulum notları)
+- [x] Unity projesi ve kod iskeleti GitHub'a gönderildi
+- [x] docs/KURULUM.md (ikinci bilgisayar için kurulum notları; henüz ikinci bilgisayarda denenmedi)
 - [ ] Temel oyun mantığı (kutular, hamle kuralı, kazanma kontrolü) ve testleri
 - [ ] İlk oynanabilir ekran
