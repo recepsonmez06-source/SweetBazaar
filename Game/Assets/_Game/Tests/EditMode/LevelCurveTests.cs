@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using NUnit.Framework;
 
 namespace SweetBazaar.Core.Tests
@@ -65,6 +66,43 @@ namespace SweetBazaar.Core.Tests
         public void LevelNumbersBelowOne_AreRejected()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => LevelCurve.GetProfile(0));
+        }
+
+        [Test]
+        public void SingleEmptyBoxLevels_ArriveInTheMiddleOfTheGameAndBecomeMoreFrequent()
+        {
+            for (int level = 1; level < 25; level++)
+                Assert.GreaterOrEqual(LevelCurve.GetProfile(level).EmptyBoxes, 2, $"level {level}");
+
+            Assert.AreEqual(1, LevelCurve.GetProfile(25).EmptyBoxes);
+            Assert.AreEqual(2, LevelCurve.GetProfile(26).EmptyBoxes);
+
+            // From level 60 two levels out of five are hard (1 empty box): the 3rd and the 5th of each group.
+            Assert.AreEqual(2, LevelCurve.GetProfile(62).EmptyBoxes);
+            Assert.AreEqual(1, LevelCurve.GetProfile(63).EmptyBoxes);
+            Assert.AreEqual(1, LevelCurve.GetProfile(65).EmptyBoxes);
+        }
+
+        [Test]
+        public void TheGameNeverGetsEasierRightAfterTheTutorial()
+        {
+            int lastTutorialTypes = LevelCurve.GetProfile(5).CandyTypes;
+
+            for (int level = 6; level <= 20; level++)
+                Assert.GreaterOrEqual(LevelCurve.GetProfile(level).CandyTypes, lastTutorialTypes, $"level {level}");
+        }
+
+        [Test]
+        public void LevelsWithASingleEmptyBox_CanBeGeneratedAndSolved()
+        {
+            foreach (int level in new[] { 25, 30, 35, 60, 63 })
+            {
+                var generated = LevelGenerator.GenerateForLevel(level);
+
+                var board = Board.FromLevel(generated.Level);
+                Assert.AreEqual(1, board.Boxes.Count(box => box.IsEmpty), $"level {level}");
+                Assert.AreEqual(SolveStatus.Solved, Solver.Solve(board).Status, $"level {level}");
+            }
         }
 
         [Test]

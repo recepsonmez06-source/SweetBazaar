@@ -19,7 +19,8 @@ namespace SweetBazaar.Core
         // Solver limit per candidate; a candidate the solver cannot decide within it is discarded.
         public int SolverStateLimit { get; set; } = 300000;
 
-        // Candidates tried before generation gives up.
+        // Candidates tried before generation gives up. With a single empty box only about one random deal in
+        // eight is solvable (and fewer with many candy types), so such profiles need far more attempts.
         public int MaxAttempts { get; set; } = 200;
 
         // Returns the problems found; an empty list means the profile is usable.

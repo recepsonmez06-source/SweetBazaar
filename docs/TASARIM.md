@@ -72,14 +72,20 @@ Bölüm üretici (2026-10-01, `Scripts/Core`: `LevelGenerator`, `LevelCurve`, `D
   doğrular. Çözülemeyen veya hamle sayısı aralığın dışında kalan aday atılır, sıradaki denenir.
   Aynı bölüm numarası her zaman aynı bölümü verir (kendi tohumlu rastgele sayı üretecimiz kullanılır).
 - **Zorluk ölçütü:** Çözücünün bulduğu en az hamle sayısı, çeşit sayısı, boş kutu sayısı.
-- **İlk taslak eğri** (tek yerde ayarlanır: `LevelCurve.cs`): 1–5 öğretici (2 çeşit, 3 boş kutu, kısa çözüm);
-  6–20: 4→6 çeşit; 21–50: 6→9; 51+: 8→10 çeşit; hep 2 boş kutu. Dalga: her 5. bölüm zor (+1 çeşit, daha uzun
-  çözüm şartı), ondan sonraki bölüm rahatlatıcı (−1 çeşit). **Hiçbir bölüm 10'dan fazla lokum çeşidi kullanmaz**
-  (görsel bütçesi; sınıfın ortak uygulaması 8–12 renk).
-- **Ölçüm (editörde):** Bir bölümün üretimi 0 ms ile birkaç sn arası sürüyor; bu yüzden **bölümler oyun içinde
-  üretilmez, önceden üretilip JSON dosyası olarak oyuna konur.** Böylece bölümler sabitlenir ve üretici sonradan
-  değişse de yayındaki bölümler değişmez.
-
+- **Taslak eğri** (tek yerde ayarlanır: `LevelCurve.cs`; 2026-10-01'de zorlaştırıldı): 1–5 öğretici (2→3 çeşit,
+  3 boş kutu, kısa çözüm); 6–24: 3→6 çeşit, 2 boş kutu; 25–59: 6→9 çeşit; 60+: 8→10 çeşit. **Dalga:** her 5. bölüm zor,
+  ondan sonraki rahatlatıcı (−1 çeşit; öğretici sonrası 3 çeşidin altına inmez). **Zor bölümler:** 6–24 arasında +1 çeşit;
+  **25'ten itibaren zor bölümlerde boş kutu 1'e iner** (bu türde zorluğun asıl kaynağı); 60'tan sonra her 5 bölümün
+  2'si (3. ve 5.) zor. Normal bölümlerde en kısa çözüm çeşit başına en az 2,5 hamle, zor 2 boş kutulularda 3,3, 1 boş
+  kutulularda 2,8 olmalı. **Hiçbir bölüm 10'dan fazla lokum çeşidi kullanmaz** (görsel bütçesi; sınıfın ortak
+  uygulaması 8–12 renk).
+- **1 boş kutulu bölümler:** Rastgele dağıtılan tahtaların yalnızca küçük bir kısmı çözülebilir (6 çeşitte ~1/8,
+  10 çeşitte ~1/135), ama çözümsüzler çözücüyle milisaniyede elendiği için çok aday denenir (8000'e kadar). Geriye
+  doğru karıştırma (çözülmüş durumdan ters hamlelerle) denendi ve **işe yaramadı**: kurallar sıkı olduğu için ~10
+  adımda tıkanıyor, bölümler sığ kalıyor; kod kaldırıldı.
+- **Ölçüm:** Bir bölümün üretimi 0 ms ile ~1 sn arası (1 boş kutulu 10 çeşitte birkaç sn); bu yüzden **bölümler oyun
+  içinde üretilmez, önceden üretilip JSON dosyası olarak oyuna konur.** Böylece bölümler sabitlenir ve üretici
+  sonradan değişse de yayındaki bölümler değişmez.
 Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
 
 - Biçim sürümü 1; her satırda bir bölüm (numara, tohum, kutu kapasitesi, en az hamle, kutuların içeriği alttan üste).
@@ -89,15 +95,16 @@ Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
   önce veya bilerek kullanılır. Unity içinden: menü *Sweet Bazaar > Build Level Pack*.
 - **Doğrulama:** Testler dosyayı okur, her bölümü geçerlilik açısından denetler, örnek bölümleri çözücüyle yeniden çözer.
   Tam doğrulama (hepsini çözme, ~3 dk): `tools\run-tests.ps1 -Filter AllLevels_AreSolvable`.
-- **Durum (2026-10-01):** 200 bölüm üretildi ve hepsinin çözülebildiği, kayıtlı en kısa hamle sayısının doğru olduğu
-  tam doğrulamayla görüldü. Çeşit ve en az hamle: 1–5: 2 çeşit, 4–7 hamle (ort. 5); 6–20: 3–6, 8–20 (ort. 13);
-  21–50: 5–9, 13–29 (ort. 21); 51–100: 7–10, 21–33 (ort. 27); 101–200: 9–10, 24–34 (ort. 30).
-- **Bilinen sınırlar:** (1) 1 boş kutulu rastgele tahtaların çoğu çözümsüz çıktı (8 denemenin 1'i kabul edildi);
-  daha zor bölümler için "karıştırma" yerine çözümden geriye doğru kurma gibi başka bir yöntem gerekebilir.
-  (2) Çeşit sayısı 10 ile sınırlı olduğundan zorluk yaklaşık 65. bölümden sonra platoya giriyor (en az hamle
-  ortalama ~30, zor bölümler ~31–33, rahatlatıcılar ~25); daha ileri zorluk bu belgenin 5. bölümündeki yeni
-  mekaniklerden (kapalı/kilitli kutu) gelmeli. (3) Zorluk sayıları tahmindir; oynayarak ayarlanacak.
-
+- **Durum (2026-10-01, zorlaştırılmış eğri):** 200 bölüm yeniden üretildi; hepsinin çözülebildiği, kayıtlı en kısa hamle
+  sayısının doğru olduğu ve hiçbirinde başlangıçta paketlenmiş kutu olmadığı doğrulandı. Çeşit ve en az hamle:
+  1–5: 2–3 çeşit, 4–10 hamle (ort. 6); 6–24: 3–6, 7–20 (ort. 14); 25–59: 5–9, 13–30 (ort. 22; 35 bölümün 7'si 1 boş kutulu);
+  60–100: 7–10, 21–33 (ort. 27; 41'in 17'si 1 boş kutulu); 101–200: 9–10, 24–34 (ort. 30; 100'ün 40'ı 1 boş kutulu).
+- **Bilinen sınırlar:** (1) Çeşit sayısı 10 ile sınırlı olduğundan en kısa çözüm uzunluğu ~65. bölümden sonra düzleşiyor
+  (~30); zorluk artışı 1 boş kutu oranından geliyor. Daha ileri zorluk bu belgenin 5. bölümündeki yeni mekaniklerden
+  (kapalı/kilitli kutu) gelmeli. (2) "En az hamle" insan zorluğunun kaba bir ölçüsüdür: 1 boş kutulu bölümler aynı
+  hamle sayısında çok daha zor hissettirir. (3) Zorluk sayıları tahmindir; oynayarak ayarlanacak.
+- **Ölçüm aracı:** `tools\CoreBench` (`dotnet run`) oyun mantığını Unity olmadan derler: bölüm üretimi/doğrulaması
+  (`build-levels`, `verify-levels`), `curve`, `oneempty`. Unity editörü açıkken de çalışır.
 ## 6. Elde tutma katmanı: Dükkânın büyümesi (taslak)
 
 - Bölüm geçtikçe altın kazanılır.

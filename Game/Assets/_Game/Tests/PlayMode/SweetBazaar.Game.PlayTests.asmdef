@@ -4,6 +4,8 @@
     "references": [
         "SweetBazaar.Core",
         "SweetBazaar.Game",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

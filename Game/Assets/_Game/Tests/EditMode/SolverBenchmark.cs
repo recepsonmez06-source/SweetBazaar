@@ -56,14 +56,14 @@ namespace SweetBazaar.Core.Tests
         [Test, Explicit("Prints timings only; run on demand.")]
         public void PrintHardProfileGenerationTimes()
         {
-            // One empty box is the hardest setting; the solver may struggle or find most candidates unsolvable.
+            // One empty box: most random deals are unsolvable, so many attempts are needed.
             foreach (int types in new[] { 6, 8, 10, 12 })
             {
                 for (int seed = 1; seed <= 2; seed++)
                 {
                     var profile = new DifficultyProfile
                     {
-                        CandyTypes = types, EmptyBoxes = 1, MaxAttempts = 4, SolverStateLimit = 100000
+                        CandyTypes = types, EmptyBoxes = 1, MaxAttempts = 3000, SolverStateLimit = 300000
                     };
                     var watch = Stopwatch.StartNew();
                     try
@@ -76,7 +76,7 @@ namespace SweetBazaar.Core.Tests
                     catch (InvalidOperationException)
                     {
                         TestContext.WriteLine(
-                            $"1 empty box: types={types,2} seed={seed} no level accepted in 4 attempts, time={watch.ElapsedMilliseconds,6} ms");
+                            $"1 empty box: types={types,2} seed={seed} no level accepted, time={watch.ElapsedMilliseconds,6} ms");
                     }
                 }
             }

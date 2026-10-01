@@ -210,7 +210,8 @@ namespace SweetBazaar.Game
 
         private void Update()
         {
-            if (_boardView == null)
+            // Not set up (or its runtime state was lost, e.g. scripts recompiled while playing in the editor).
+            if (_boardView == null || _hud == null || _camera == null || _session == null)
                 return;
 
             if (Screen.width != _screenWidth || Screen.height != _screenHeight || Screen.safeArea != _safeArea)

@@ -52,6 +52,10 @@ crashlytics-build.properties
 *.unitypackage
 *.app
 
+# --- tools\CoreBench (dotnet) derleme çıktıları ---
+/tools/**/bin/
+/tools/**/obj/
+
 # --- Editör / IDE ---
 .vs/
 .idea/
