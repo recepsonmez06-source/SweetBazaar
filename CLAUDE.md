@@ -40,6 +40,7 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - Komut satırı testleri için editör o proje açıkken çalıştırılamaz (proje kilidi); önce editörün kapalı olduğunu kullanıcıdan teyit et.
 - **Testleri çalıştırma:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-tests.ps1`
   (çıkış kodu 0 = hepsi geçti, 2 = test hatası). Sonuç ve log: `%TEMP%\SweetBazaar-tests\`.
+  `-Filter <ad>` yalnızca eşleşen testleri çalıştırır; ölçüm testi: `-Filter SolverBenchmark` (çıktı sonuç XML'inde).
 - Kod yapısı: `Game/Assets/_Game/Scripts/Core` (saf mantık, Unity'ye erişemez), `Scripts/Game`
   (Unity tarafı), `Tests/EditMode` (testler). Ayrıntı: `docs/TASARIM.md` bölüm 12.
 - Android paket adı: `com.gameworld.sweetbazaar`; ekran dikey kilitli.
@@ -100,6 +101,7 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Unity projesi ve kod iskeleti GitHub'a gönderildi
 - [x] docs/KURULUM.md (ikinci bilgisayar için kurulum notları; henüz ikinci bilgisayarda denenmedi)
 - [x] Temel oyun mantığı (A): kutu, tahta, hamle kuralı, kazanma/takılma, geri alma, LevelDefinition + 56 test
-- [ ] Çözücü (B): çözülebilirlik ve en az hamle sayısı
+- [x] Çözücü (B): `Solver.Solve` (BFS, en kısa çözüm, durum üst sınırı) + testler. Ölçüm (rastgele tahta, 2 boş kutu,
+  editörde): 10 çeşitte 12–57 bin durum, 0,6–3,6 sn. Az boş kutulu/zor tahtalar henüz ölçülmedi.
 - [ ] Bölüm üretici (C) ve JSON bölüm dosyaları (D)
 - [ ] İlk oynanabilir ekran

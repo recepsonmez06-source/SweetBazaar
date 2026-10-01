@@ -4,7 +4,9 @@
 param(
     [ValidateSet('EditMode', 'PlayMode')]
     [string]$Platform = 'EditMode',
-    [string]$OutDir = (Join-Path $env:TEMP 'SweetBazaar-tests')
+    [string]$OutDir = (Join-Path $env:TEMP 'SweetBazaar-tests'),
+    # Only run tests whose name matches (also the way to run [Explicit] tests such as SolverBenchmark).
+    [string]$Filter = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -31,6 +33,7 @@ $unityArgs = @(
     '-testResults', "`"$results`"",
     '-logFile', "`"$log`""
 )
+if ($Filter) { $unityArgs += @('-testFilter', "`"$Filter`"") }
 # Not Start-Process -Wait: it also waits for helper processes Unity leaves behind (e.g. the Android ADB server).
 $process = Start-Process -FilePath $unity -ArgumentList $unityArgs -PassThru
 $null = $process.Handle   # keeps the exit code readable after the process ends
