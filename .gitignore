@@ -11,12 +11,13 @@
 /Game/[Mm]emoryCaptures/
 /Game/[Rr]ecordings/
 
-# Test paketinin derleme sırasında ürettiği dosyalar (bizim kaynaklarımız _Game/Resources altındadır)
-/Game/Assets/Resources/
-/Game/Assets/Resources.meta
-
 # Meta dosyaları her zaman depoya girer (Unity referansları bunlara bağlı)
 !/Game/[Aa]ssets/**/*.meta
+
+# Test paketinin derleme sırasında ürettiği dosyalar (bizim kaynaklarımız _Game/Resources altındadır).
+# Bu satırlar yukarıdaki meta kuralından SONRA gelmeli, yoksa meta dosyası yine girer.
+/Game/Assets/Resources/
+/Game/Assets/Resources.meta
 
 # Mağaza aracı eklentileri
 /Game/[Aa]ssets/AssetStoreTools*
