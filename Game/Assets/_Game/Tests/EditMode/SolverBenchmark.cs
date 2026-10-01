@@ -30,6 +30,58 @@ namespace SweetBazaar.Core.Tests
             }
         }
 
+        [Test, Explicit("Prints timings only; run on demand.")]
+        public void PrintLevelCurveGenerationTimes()
+        {
+            var total = Stopwatch.StartNew();
+            for (int level = 1; level <= 120; level++)
+            {
+                var watch = Stopwatch.StartNew();
+                var profile = LevelCurve.GetProfile(level);
+                try
+                {
+                    var generated = LevelGenerator.GenerateForLevel(level);
+                    TestContext.WriteLine(
+                        $"level={level,3} types={profile.CandyTypes,2} empty={profile.EmptyBoxes} " +
+                        $"minMoves={generated.MinMoves,3} attempts={generated.Attempts,3} time={watch.ElapsedMilliseconds,6} ms");
+                }
+                catch (InvalidOperationException e)
+                {
+                    TestContext.WriteLine($"level={level,3} types={profile.CandyTypes,2} FAILED: {e.Message} time={watch.ElapsedMilliseconds} ms");
+                }
+            }
+            TestContext.WriteLine($"total: {total.Elapsed.TotalSeconds:F1} s");
+        }
+
+        [Test, Explicit("Prints timings only; run on demand.")]
+        public void PrintHardProfileGenerationTimes()
+        {
+            // One empty box is the hardest setting; the solver may struggle or find most candidates unsolvable.
+            foreach (int types in new[] { 6, 8, 10, 12 })
+            {
+                for (int seed = 1; seed <= 2; seed++)
+                {
+                    var profile = new DifficultyProfile
+                    {
+                        CandyTypes = types, EmptyBoxes = 1, MaxAttempts = 4, SolverStateLimit = 100000
+                    };
+                    var watch = Stopwatch.StartNew();
+                    try
+                    {
+                        var generated = LevelGenerator.Generate(profile, seed);
+                        TestContext.WriteLine(
+                            $"1 empty box: types={types,2} seed={seed} minMoves={generated.MinMoves,3} " +
+                            $"attempts={generated.Attempts} time={watch.ElapsedMilliseconds,6} ms");
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        TestContext.WriteLine(
+                            $"1 empty box: types={types,2} seed={seed} no level accepted in 4 attempts, time={watch.ElapsedMilliseconds,6} ms");
+                    }
+                }
+            }
+        }
+
         private static Board RandomBoard(int types, int seed)
         {
             var random = new Random(seed);

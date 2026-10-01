@@ -15,8 +15,14 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - Proje sahibi: Recep. Sistem yöneticisi; Git, komut satırı, sunucu kavramlarına yabancı değil,
   ancak **programlama ve oyun geliştirme deneyimi yok**.
 - **İletişim dili Türkçe.** Açıklamalar sade olmalı; teknik terimler ilk kullanıldığında kısaca açıklanmalı.
-- **Kullanıcının onayı olmadan hiçbir şey yapılmaz.** Dosya oluşturmadan, değiştirmeden veya komut
-  çalıştırmadan önce ne yapılacağını kısaca anlat ve onay al. Büyük işleri küçük, kontrol edilebilir adımlara böl.
+- **Çalışma izni (kullanıcı 2026-10-01'de kalıcı olarak verdi):** Her adım için onay sorma. Proje dosyalarını
+  oluştur/değiştir, komut çalıştır, testler geçince commit et ve özel GitHub deposuna `git push` yap.
+  Oyun tasarımı kararlarını bu türün (sıralama bulmacaları) yaygın uygulamalarına göre kendin ver, kararı
+  `docs/TASARIM.md`'ye yaz ve kullanıcıya kısaca özetle; kullanıcının oyun geliştirme deneyimi yok, istemiyor da.
+  **Yine de önceden sor:** geri alınamaz/yıkıcı işler (force push, silme, geçmişi yeniden yazma), para harcatan
+  şeyler, gizli bilgiler ve hesap ayarları, proje dışına dokunan işler ve oyunun kimliğini değiştiren büyük
+  kararlar (ad, tür, gelir modeli, motor). Büyük işleri küçük, kontrol edilebilir adımlara böl; her adım sonunda
+  ne yaptığını ve ölçtüğünü dürüstçe özetle (sorunları da).
 - Kodu Claude yazar; kullanıcı oyunu çalıştırıp test eder ve geri bildirim verir.
   Oyunun "eğlenceli olup olmadığına" kullanıcı karar verir.
 - Hataları kullanıcıdan ekran görüntüsü istemek yerine mümkün olduğunca motorun log dosyalarından
@@ -48,7 +54,7 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 ## Git kuralları
 
 - Her oturumun başında: uzak depodan son hali çek (`git pull`).
-- Her oturumun sonunda: kullanıcı onayıyla commit et ve gönder (`git push`).
+- Her adım bitip testler geçince: commit et ve gönder (`git push`); ayrıca sormana gerek yok (bkz. "Çalışma izni").
 - Commit mesajları kısa ve Türkçe olabilir; ne yapıldığını açıkça söylemeli.
 - `pull.ff = only` olduğu için çekme başarısız olursa **kendi başına birleştirme yapma**;
   durumu kullanıcıya açıkla ve birlikte çöz.
@@ -103,5 +109,7 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Temel oyun mantığı (A): kutu, tahta, hamle kuralı, kazanma/takılma, geri alma, LevelDefinition + 56 test
 - [x] Çözücü (B): `Solver.Solve` (BFS, en kısa çözüm, durum üst sınırı) + testler. Ölçüm (rastgele tahta, 2 boş kutu,
   editörde): 10 çeşitte 12–57 bin durum, 0,6–3,6 sn. Az boş kutulu/zor tahtalar henüz ölçülmedi.
-- [ ] Bölüm üretici (C) ve JSON bölüm dosyaları (D)
+- [x] Bölüm üretici (C): `LevelGenerator` + `LevelCurve` (taslak zorluk eğrisi) + testler; ilk 120 bölüm üretildi (bkz. TASARIM.md bölüm 5)
+- [ ] JSON bölüm dosyaları (D): bölümleri önceden üretip kaydetme ve okuma
+- [ ] Açık: eğri 13 çeşide çıkıyor (görsel sayısı); 1 boş kutulu zor bölümler için başka üretim yöntemi gerekebilir
 - [ ] İlk oynanabilir ekran

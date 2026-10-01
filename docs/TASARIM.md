@@ -66,6 +66,23 @@ Kesinleşen kural ayrıntıları (2026-10-01, `Scripts/Core` içinde kodlandı v
 - Bölümler algoritmayla üretilir; her bölüm bir çözücüyle **çözülebilirlik** açısından doğrulanır.
 - Zorluk ölçütleri (çeşit sayısı, boş kutu, minimum hamle sayısı vb.) veriye bağlı ve ayarlanabilir olmalı.
 
+Bölüm üretici (2026-10-01, `Scripts/Core`: `LevelGenerator`, `LevelCurve`, `DifficultyProfile`):
+
+- **Yöntem:** Lokumlar bölüm numarasından türeyen tohumla (seed) rastgele kutulara dağıtılır; çözücü bölümü
+  doğrular. Çözülemeyen veya hamle sayısı aralığın dışında kalan aday atılır, sıradaki denenir.
+  Aynı bölüm numarası her zaman aynı bölümü verir (kendi tohumlu rastgele sayı üretecimiz kullanılır).
+- **Zorluk ölçütü:** Çözücünün bulduğu en az hamle sayısı, çeşit sayısı, boş kutu sayısı.
+- **İlk taslak eğri** (tek yerde ayarlanır: `LevelCurve.cs`): 1–5 öğretici (2 çeşit, 3 boş kutu, kısa çözüm);
+  6–20: 4→6 çeşit; 21–50: 6→9; 51+: 8→12 çeşit; hep 2 boş kutu. Dalga: her 5. bölüm zor (+1 çeşit, daha uzun
+  çözüm şartı), ondan sonraki bölüm rahatlatıcı (−1 çeşit).
+- **Ölçüm (editörde):** İlk 120 bölümün hepsi üretildi (en az hamle 4 → yaklaşık 40). Bir bölüm 0 ms ile 10 sn arası
+  sürdü, üst uçta 12–13 çeşitte birkaç saniye; bu yüzden **bölümler oyun içinde üretilmez, önceden üretilip
+  JSON dosyası olarak oyuna konur.** Böylece bölümler sabitlenir ve üretici sonradan değişse de yayındaki bölümler değişmez.
+- **Bilinen sınırlar:** (1) 1 boş kutulu rastgele tahtaların çoğu çözümsüz çıktı (8 denemenin 1'i kabul edildi);
+  daha zor bölümler için "karıştırma" yerine çözümden geriye doğru kurma gibi başka bir yöntem gerekebilir.
+  (2) Taslak eğri 13 çeşide kadar çıkıyor; oyunda o kadar farklı lokum görseli gerekir ya da eğri sınırlanmalı.
+  (3) Zorluk sayıları tahmindir; oynayarak ayarlanacak.
+
 ## 6. Elde tutma katmanı: Dükkânın büyümesi (taslak)
 
 - Bölüm geçtikçe altın kazanılır.
