@@ -47,6 +47,10 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - **Testleri çalıştırma:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-tests.ps1`
   (çıkış kodu 0 = hepsi geçti, 2 = test hatası). Sonuç ve log: `%TEMP%\SweetBazaar-tests\`.
   `-Filter <ad>` yalnızca eşleşen testleri çalıştırır; ölçüm testi: `-Filter SolverBenchmark` (çıktı sonuç XML'inde).
+  Oyun akışı testleri (PlayMode): `-Platform PlayMode`. Her iki grubu da çalıştır; ikisi de geçmeli.
+- **Görünümü gözle denetle:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\preview.ps1` PNG'ler üretir
+  (yol çıktıda); `Read` aracıyla görüntüleyebilirsin. Görünümü değiştirdiysen mutlaka çalıştır.
+- **Başka editör metodu çalıştırma:** `tools\run-editor-method.ps1 -Method <Ad.Alan.Metot> [-Graphics]`.
 - **Bölüm dosyası üretme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-levels.ps1 [-Count 200] [-Rebuild]`
   (editör kapalıyken). Varsayılan yalnızca ekler; `-Rebuild` yayındaki bölümleri değiştirir, kullanıcıya sormadan kullanma.
 - Kod yapısı: `Game/Assets/_Game/Scripts/Core` (saf mantık, Unity'ye erişemez), `Scripts/Game`
@@ -115,5 +119,10 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] JSON bölüm dosyaları (D): `LevelPackJson` + `tools\build-levels.ps1`; 200 bölüm üretildi ve tam doğrulandı
   (`Resources/Levels/levels.json`, yalnızca ekleyen üretim). Lokum çeşidi en çok 10.
 - [ ] Açık: 1 boş kutulu zor bölümler için başka üretim yöntemi; ~65. bölümden sonra zorluk platosu (yeni mekanik gerekir)
-- [ ] Unity tarafı (E): tahta görünümü, dokunma girişi, animasyonlar, ilk oynanabilir ekran
+- [x] Çok dil altyapısı: `Localizer` + `Resources/Localization/{en,tr}.json`; metinler yalnızca `LocKeys` anahtarlarıyla
+- [x] Unity tarafı (E): tahta görünümü, dokunma girişi, animasyonlar, arayüz, ana sahne (`Scenes/Main.unity`);
+  ilk oynanabilir sürüm. Yer tutucu (kodla çizilen) görseller; 15 PlayMode + 140 EditMode test geçiyor
+  (bkz. TASARIM.md bölüm 13). **Kullanıcı Unity'de `Main` sahnesini açıp Play'e basarak deneyebilir.**
+- [ ] Sıradaki: ses efektleri/müzik, ayarlar menüsü (dil seçimi), reklam (AdMob test kimlikleriyle), reklam kaldırma satın
+  alımı, kayıt/ilerleme iyileştirmeleri, gerçek görseller, Android'de telefonda deneme (APK)
 - [ ] İlk oynanabilir ekran

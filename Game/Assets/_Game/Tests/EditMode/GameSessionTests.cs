@@ -93,6 +93,39 @@ namespace SweetBazaar.Core.Tests
         }
 
         [Test]
+        public void TryUndo_ReportsTheMoveThatWasTakenBack()
+        {
+            var session = new GameSession(Cap4(new[] { 0, 1 }, None));
+            session.TryMove(0, 1, out var made);
+
+            Assert.IsTrue(session.TryUndo(out var info));
+
+            Assert.IsFalse(info.WasAddedBox);
+            Assert.AreEqual(made.Move, info.UndoneMove.Move);
+        }
+
+        [Test]
+        public void TryUndo_ReportsTheAddedBoxThatWasTakenBack()
+        {
+            var session = new GameSession(Cap4(new[] { 0 }));
+            int index = session.AddEmptyBox();
+
+            Assert.IsTrue(session.TryUndo(out var info));
+
+            Assert.IsTrue(info.WasAddedBox);
+            Assert.AreEqual(index, info.RemovedBoxIndex);
+        }
+
+        [Test]
+        public void TryUndo_WithNothingToUndo_ReturnsFalse()
+        {
+            var session = new GameSession(Cap4(new[] { 0 }));
+
+            Assert.IsFalse(session.TryUndo(out var info));
+            Assert.IsFalse(info.WasAddedBox);
+        }
+
+        [Test]
         public void ASmallLevel_CanBePlayedToAWin()
         {
             // Capacity 2: [0,1] [1,0] [] -> three moves pack both types.

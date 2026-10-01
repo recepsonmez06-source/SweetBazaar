@@ -2,7 +2,9 @@
     "name": "SweetBazaar.Game",
     "rootNamespace": "SweetBazaar.Game",
     "references": [
-        "SweetBazaar.Core"
+        "SweetBazaar.Core",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -2,7 +2,8 @@
     "name": "SweetBazaar.Editor",
     "rootNamespace": "SweetBazaar.EditorTools",
     "references": [
-        "SweetBazaar.Core"
+        "SweetBazaar.Core",
+        "SweetBazaar.Game"
     ],
     "includePlatforms": [
         "Editor"

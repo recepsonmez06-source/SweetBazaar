@@ -165,3 +165,30 @@ Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
   - `Tests/EditMode` (`SweetBazaar.Core.Tests`): Core'un otomatik testleri.
 - **Testler:** `tools\run-tests.ps1` ile komut satırından çalışır (editör o proje açıkken çalışmaz).
 - **Sürüm denetimi:** Yalnızca Git (Unity Version Control kullanılmıyor). Büyük ikili dosyalar Git LFS ile.
+
+## 13. Oyun ekranı ve kontroller (ilk oynanabilir sürüm, 2026-10-01)
+
+Karar ve davranışlar bu türün (su/top sıralama oyunları) yaygın uygulamalarına göre verildi:
+
+- **Kontrol:** Dokunarak seç, dokunarak bırak. Dolu bir kutuya dokununca üstteki aynı çeşit lokumlar yukarı kalkar;
+  başka bir kutuya dokununca geçerliyse taşınır. Aynı kutuya tekrar dokunmak veya boş yere dokunmak seçimi bırakır.
+  Geçersiz hedefe dokunulursa seçim o kutuya geçer (alınamayacak bir kutuysa sallanır). Paketlenmiş kutu seçilemez.
+- **Animasyon:** Lokumlar yay çizerek uçar (arka arkaya), kutu dolunca altın paket kurdelesiyle kapanır ve küçük
+  bir zıplama yapar. Animasyon sürerken dokunma yok sayılır.
+- **Düzen:** Tek ekran, dikey. Satır başına en çok 4 kutu (az sütun = büyük, kolay dokunulur kutu); kutular
+  satırlara eşit dağıtılır; kamera üst/alt arayüze yer bırakacak şekilde kutuları ortalar. Çentik/yuvarlak köşeler
+  için güvenli alan kullanılır. 9:16, 9:20 ve 3:4 oranlarında her kutunun ekrana sığdığı testle doğrulandı.
+- **Arayüz:** Üstte bölüm ve hamle sayısı, sağ üstte dil düğmesi (geçilecek dilin kendi adını gösterir),
+  altta Geri al / Ekstra kutu / Yeniden başla. Kazanınca "Sonraki bölüm" kartı; takılınca üstte uyarı şeridi
+  (tahta görünür kalır).
+- **Geri al:** Sınırsız (şimdilik). **Ekstra kutu:** Bölüm başına 1 kez (şimdilik ücretsiz; ileride ödüllü reklam
+  karşılığı). Geri al, ekstra kutuyu da geri alır ve hakkı geri verir. Reklam bağlantısı sonraki adım.
+- **İlerleme:** Bulunulan bölüm ve seçilen dil cihazda saklanır. Son bölümden sonra bölüm 1'e dönülür (yeni
+  bölümler eklendikçe uzar).
+- **Görsel:** Henüz yer tutucu; lokumlar, kutu ve paket kodla çizilir. Her çeşit hem renkle hem desenle ayırt edilir
+  (nokta, parça, benek, tohum, çapraz çizgi, yatay çizgi, halka, artı, dama, baklava) — renk körü oyuncular için.
+  Gerçek görseller gelince yalnızca `CandyArt` değişir. **Ses yok** (ses dosyaları gerekir; sonraki adım).
+- **Sahne:** `Assets/_Game/Scenes/Main.unity` (kamera + `GameBootstrap`); Play'e basınca oyun kendiliğinden kurulur.
+  Sahneyi yeniden üretmek: menü *Sweet Bazaar > Create Main Scene*.
+- **Kontrol aracı:** `tools\preview.ps1` oyun ekranını birkaç durumda PNG'ye çizer (bölümler, seçim, paketlenmiş kutular,
+  kazanma, takılma, Türkçe); oynamadan görünüm denetimi için.

@@ -3,6 +3,25 @@ using System.Collections.Generic;
 
 namespace SweetBazaar.Core
 {
+    // What an undo took back: either a move or an added box.
+    public readonly struct UndoInfo
+    {
+        public UndoInfo(MoveOutcome undoneMove, bool wasAddedBox, int removedBoxIndex)
+        {
+            UndoneMove = undoneMove;
+            WasAddedBox = wasAddedBox;
+            RemovedBoxIndex = removedBoxIndex;
+        }
+
+        // The move that was reverted (meaningful when WasAddedBox is false).
+        public MoveOutcome UndoneMove { get; }
+
+        public bool WasAddedBox { get; }
+
+        // Index the removed extra box had (meaningful when WasAddedBox is true).
+        public int RemovedBoxIndex { get; }
+    }
+
     // A board plus the history needed for undo. Limits on undo and the extra box
     // (rewarded ads, free uses) are policy for the game layer, not enforced here.
     public sealed class GameSession
@@ -51,16 +70,27 @@ namespace SweetBazaar.Core
         }
 
         // Reverts the latest move or added box; returns false if there is nothing to undo.
-        public bool Undo()
+        public bool Undo() => TryUndo(out _);
+
+        // Like Undo, and tells what was undone so a view can animate it.
+        public bool TryUndo(out UndoInfo info)
         {
+            info = default;
             if (_history.Count == 0)
                 return false;
 
             var entry = _history.Pop();
             if (entry.AddedBox)
+            {
+                int index = Board.Boxes.Count - 1;
                 Board.RemoveLastBox();
+                info = new UndoInfo(default, wasAddedBox: true, removedBoxIndex: index);
+            }
             else
+            {
                 Board.Revert(entry.Outcome);
+                info = new UndoInfo(entry.Outcome, wasAddedBox: false, removedBoxIndex: -1);
+            }
             return true;
         }
     }
