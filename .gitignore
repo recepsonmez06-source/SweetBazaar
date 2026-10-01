@@ -1,0 +1,71 @@
+# Sweet Bazaar — Unity projesi depo içinde Game/ klasöründedir.
+
+# --- Unity: geçici / önbellek / üretilen klasörler ---
+/Game/[Ll]ibrary/
+/Game/[Tt]emp/
+/Game/[Oo]bj/
+/Game/[Bb]uild/
+/Game/[Bb]uilds/
+/Game/[Ll]ogs/
+/Game/[Uu]ser[Ss]ettings/
+/Game/[Mm]emoryCaptures/
+/Game/[Rr]ecordings/
+
+# Meta dosyaları her zaman depoya girer (Unity referansları bunlara bağlı)
+!/Game/[Aa]ssets/**/*.meta
+
+# Mağaza aracı eklentileri
+/Game/[Aa]ssets/AssetStoreTools*
+
+# Unity'nin ürettiği çözüm/proje dosyaları (IDE açılınca yeniden oluşur)
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+
+# Derleme çıktıları
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# --- Editör / IDE ---
+.vs/
+.idea/
+.vscode/
+
+# --- İşletim sistemi ---
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# --- Gizli bilgiler: ASLA depoya girmez (bkz. CLAUDE.md) ---
+*.keystore
+*.jks
+*.p12
+*.p8
+*.pem
+.env
+secrets
+secrets.*
+!secrets.example
+
+# --- Claude Code: kişisel/yerel ayarlar ---
+.claude/settings.local.json
