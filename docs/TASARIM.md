@@ -101,3 +101,21 @@ Durum: İlk taslak. "Taslak" olarak işaretli maddeler kullanıcıyla henüz kes
 - Kesin bölüm öğeleri ve sıraları
 - Görsellerin kaynağı (asset paketi mi, tasarımcı mı?)
 - Mağaza adının son kontrolü
+
+## 12. Teknik kararlar
+
+- **Motor:** Unity 6.3 LTS, sürüm 6000.3.25f1; şablon Universal 2D (URP). Karar tarihi: 2026-10-01.
+- **İlk hedef platform: Android.** Unity projesi tek ve ortaktır; iOS sonradan aynı projeden, Mac
+  gerektirdiği için bulut derlemeyle (GitHub Actions + GameCI veya Codemagic) üretilecek.
+- **Android paket adı (bundle ID): `com.gameworld.sweetbazaar`.** Google Play'de yayından sonra
+  değiştirilemez. Şirket adı: Game World; uygulama adı (cihazda görünen): Sweet Bazaar.
+  iOS paket adı iOS aşamasında ayrıca belirlenecek.
+- **Ekran yönü:** Dikey (portrait) kilitli.
+- **Depo yapısı:** Köke dokümanlar ve araçlar (`docs/`, `tools/`), Unity projesi `Game/` altında.
+- **Kod yapısı** (`Game/Assets/_Game/`):
+  - `Scripts/Core` (`SweetBazaar.Core`): saf oyun mantığı; `noEngineReferences` açık, yani
+    `UnityEngine`'e erişemez. Kutular, hamle kuralları, kazanma kontrolü, bölüm üretici, çözücü burada.
+  - `Scripts/Game` (`SweetBazaar.Game`): görüntü, animasyon, ses, dokunmatik giriş. Core'a bağımlıdır, tersi olamaz.
+  - `Tests/EditMode` (`SweetBazaar.Core.Tests`): Core'un otomatik testleri.
+- **Testler:** `tools\run-tests.ps1` ile komut satırından çalışır (editör o proje açıkken çalışmaz).
+- **Sürüm denetimi:** Yalnızca Git (Unity Version Control kullanılmıyor). Büyük ikili dosyalar Git LFS ile.

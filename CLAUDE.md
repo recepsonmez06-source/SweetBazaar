@@ -38,6 +38,11 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - Aynı sürüm iki bilgisayarda da kurulu olmalı; sürüm değiştirmeden önce kullanıcıya sor.
 - Hata ayıklama: Editör logu `%LOCALAPPDATA%\Unity\Editor\Editor.log`; komut satırı derleme/test çıktıları da buradan okunur.
 - Komut satırı testleri için editör o proje açıkken çalıştırılamaz (proje kilidi); önce editörün kapalı olduğunu kullanıcıdan teyit et.
+- **Testleri çalıştırma:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\run-tests.ps1`
+  (çıkış kodu 0 = hepsi geçti, 2 = test hatası). Sonuç ve log: `%TEMP%\SweetBazaar-tests\`.
+- Kod yapısı: `Game/Assets/_Game/Scripts/Core` (saf mantık, Unity'ye erişemez), `Scripts/Game`
+  (Unity tarafı), `Tests/EditMode` (testler). Ayrıntı: `docs/TASARIM.md` bölüm 12.
+- Android paket adı: `com.gameworld.sweetbazaar`; ekran dikey kilitli.
 
 ## Git kuralları
 
@@ -89,9 +94,10 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Oyun motoru kararı: Unity 6.3 LTS (6000.3.25f1), Android modülleri kurulu; Unity lisansı doğrulandı
 - [x] GitHub'da boş, private SweetBazaar deposu oluşturuldu
 - [x] .gitignore ve .gitattributes hazırlandı
-- [ ] İlk commit ve GitHub'a push (uzak depo bağlantısı)
-- [ ] Unity projesinin oluşturulması (Game/, Universal 2D), Android ayarları, paket adı
-- [ ] Kod iskeleti (Core / Game / Tests) ve komut satırı test altyapısı
+- [x] Depo iskeleti commit edildi ve GitHub'a gönderildi (uzak depo bağlı)
+- [x] Unity projesi oluşturuldu (Game/, Universal 2D), Android hedefi ve paket adı ayarlandı
+- [x] Kod iskeleti (Core / Game / Tests) ve komut satırı test altyapısı (tools/run-tests.ps1)
+- [ ] Unity projesi commit'lerinin GitHub'a push'u (GitHub 2FA yapıldıktan sonra)
 - [ ] docs/KURULUM.md (ikinci bilgisayar için kurulum notları)
 - [ ] Temel oyun mantığı (kutular, hamle kuralı, kazanma kontrolü) ve testleri
 - [ ] İlk oynanabilir ekran
