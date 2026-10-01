@@ -1,0 +1,17 @@
+{
+  "formatVersion": 1,
+  "language": "tr",
+  "name": "Türkçe",
+  "strings": {
+    "hud.level": "Bölüm {0}",
+    "hud.moves": "Hamle: {0}",
+    "hud.undo": "Geri al",
+    "hud.restart": "Yeniden başla",
+    "hud.addBox": "Ekstra kutu",
+    "win.title": "Bölüm tamamlandı!",
+    "win.next": "Sonraki bölüm",
+    "win.allDone": "Şimdilik tüm bölümler bitti! Baştan başlıyoruz.",
+    "stuck.title": "Hamle kalmadı",
+    "stuck.hint": "Bir hamleyi geri al, ekstra kutu ekle ya da yeniden başla."
+  }
+}

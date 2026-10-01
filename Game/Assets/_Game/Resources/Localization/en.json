@@ -1,0 +1,17 @@
+{
+  "formatVersion": 1,
+  "language": "en",
+  "name": "English",
+  "strings": {
+    "hud.level": "Level {0}",
+    "hud.moves": "Moves: {0}",
+    "hud.undo": "Undo",
+    "hud.restart": "Restart",
+    "hud.addBox": "Extra box",
+    "win.title": "Level complete!",
+    "win.next": "Next level",
+    "win.allDone": "That was the last level for now! Starting over.",
+    "stuck.title": "No moves left",
+    "stuck.hint": "Undo a move, add an extra box or restart."
+  }
+}
