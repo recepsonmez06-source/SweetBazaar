@@ -72,6 +72,51 @@ namespace SweetBazaar.Core.Tests
         }
 
         [Test]
+        public void WithATargetWinRate_TheAcceptedLevelLandsInsideTheBand()
+        {
+            var profile = new DifficultyProfile
+            {
+                CandyTypes = 5, EmptyBoxes = 2, TargetWinRate = 70, WinRateTolerance = 6, MaxAttempts = 2000,
+            };
+
+            var generated = LevelGenerator.Generate(profile, seed: 21);
+
+            Assert.That(generated.WinRate, Is.InRange(64, 76));
+            // the stored number is exactly what measuring the level again gives
+            var board = Board.FromLevel(generated.Level);
+            Assert.AreEqual(generated.WinRate, LevelGenerator.MeasureWinRate(board, generated.Seed, profile.BotTrials));
+        }
+
+        [Test]
+        public void WithoutATargetWinRate_TheDifficultyIsNotMeasured()
+        {
+            var generated = LevelGenerator.Generate(Profile(4), seed: 2);
+
+            Assert.AreEqual(-1, generated.WinRate);
+        }
+
+        [Test]
+        public void ATargetNoLevelCanMeet_ThrowsAfterTheAttemptsRunOut()
+        {
+            // 2 candy types with 3 empty boxes are won by the bot every time; asking for 0% is impossible.
+            var profile = new DifficultyProfile
+            {
+                CandyTypes = 2, EmptyBoxes = 3, TargetWinRate = 0, WinRateTolerance = 0, MaxAttempts = 5,
+            };
+
+            Assert.Throws<InvalidOperationException>(() => LevelGenerator.Generate(profile, seed: 1));
+        }
+
+        [Test]
+        public void ProfileValidation_ChecksTheDifficultySettings()
+        {
+            Assert.IsNotEmpty(new DifficultyProfile { TargetWinRate = 101 }.Validate());
+            Assert.IsNotEmpty(new DifficultyProfile { WinRateTolerance = -1 }.Validate());
+            Assert.IsNotEmpty(new DifficultyProfile { BotTrials = 10, BotPrefilterTrials = 20 }.Validate());
+            Assert.IsEmpty(new DifficultyProfile { TargetWinRate = 50 }.Validate());
+        }
+
+        [Test]
         public void ImpossibleMoveRange_ThrowsAfterTheAttemptsRunOut()
         {
             var profile = Profile(4, minMoves: 1000);

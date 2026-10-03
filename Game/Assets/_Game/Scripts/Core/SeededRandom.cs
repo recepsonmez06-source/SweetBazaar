@@ -23,6 +23,15 @@ namespace SweetBazaar.Core
             }
         }
 
+        // Derives an independent stream from a base seed and an index (e.g. one per simulated play-through).
+        public static SeededRandom ForStream(ulong seed, int index)
+        {
+            unchecked
+            {
+                return new SeededRandom(seed * 0x9E3779B97F4A7C15UL + (ulong)index * 0xD1B54A32D192ED03UL + 0x2545F4914F6CDD1DUL);
+            }
+        }
+
         // Uniform-enough integer in [0, maxExclusive); the tiny modulo bias is irrelevant for shuffling candies.
         public int Next(int maxExclusive) => (int)(NextUInt64() % (ulong)maxExclusive);
     }

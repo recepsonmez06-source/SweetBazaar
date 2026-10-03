@@ -72,18 +72,25 @@ Bölüm üretici (2026-10-01, `Scripts/Core`: `LevelGenerator`, `LevelCurve`, `D
   doğrular. Çözülemeyen veya hamle sayısı aralığın dışında kalan aday atılır, sıradaki denenir.
   Aynı bölüm numarası her zaman aynı bölümü verir (kendi tohumlu rastgele sayı üretecimiz kullanılır).
 - **Zorluk ölçütü:** Çözücünün bulduğu en az hamle sayısı, çeşit sayısı, boş kutu sayısı.
-- **Taslak eğri** (tek yerde ayarlanır: `LevelCurve.cs`; 2026-10-01'de zorlaştırıldı): 1–5 öğretici (2→3 çeşit,
-  3 boş kutu, kısa çözüm); 6–24: 3→6 çeşit, 2 boş kutu; 25–59: 6→9 çeşit; 60+: 8→10 çeşit. **Dalga:** her 5. bölüm zor,
-  ondan sonraki rahatlatıcı (−1 çeşit; öğretici sonrası 3 çeşidin altına inmez). **Zor bölümler:** 6–24 arasında +1 çeşit;
-  **25'ten itibaren zor bölümlerde boş kutu 1'e iner** (bu türde zorluğun asıl kaynağı); 60'tan sonra her 5 bölümün
-  2'si (3. ve 5.) zor. Normal bölümlerde en kısa çözüm çeşit başına en az 2,5 hamle, zor 2 boş kutulularda 3,3, 1 boş
-  kutulularda 2,8 olmalı. **Hiçbir bölüm 10'dan fazla lokum çeşidi kullanmaz** (görsel bütçesi; sınıfın ortak
-  uygulaması 8–12 renk).
+- **Zorluk ölçütü (2026-10-03):** Yalnızca "en az hamle sayısı" zorluğu iyi ölçmüyordu (kullanıcı: "level arttıkça
+  zorlaşmıyor, ara ara çok basit level geliyor"; ölçüm de bunu doğruladı: aynı aşamadaki bölümlerde bot %0 ile %83
+  arasında değişiyordu). Artık zorluk **CasualBot** ile ölçülür: kısa vadeli akıllı alışkanlıkları olan (aynı çeşidin
+  üstüne koy, kutu tamamla, boş kutuyu harcama, son hamleyi geri alma), ileriyi hesaplamayan sanal bir oyuncu; 100 kez
+  oynar, **kazanma oranı** (%100 = çok kolay, %0 = çok zor) bölümün zorluğudur. Tamsayı hesabı ve sabit rastgele
+  üreteçle her cihazda aynı sonucu verir; ölçülen değer levels.json'a (otWinRate) yazılır.
+- **Eğri** (tek yerde ayarlanır: `LevelCurve.cs`): Her bölüme **yalnızca düşen** bir hedef kazanma oranı verilir
+  (bölüm 1–10: %100; 20: %96; 30: %86; 45: %66; 65: %46; 90: %28; 120: %16; 160: %9; 200: %5,5; sonrası yavaşça %3).
+  Ayar (çeşit, boş kutu) merdivenden seçilir; üretici yalnızca **hedefe ±4 puan** yakın bölümleri kabul eder. Rastgele
+  bölümlerin ayar içi dağılımı çok geniş (ör. 8 çeşit/2 boş kutu: %10–%85), bu bant o dalgalanmayı keser. Rahatlatıcı
+  bölüm **yoktur**: hiçbir bölüm hedefi gereği öncekinden kolay değildir. Ayar merdiveni (ortalama bot kazanma oranı):
+  3 boş kutu, 2–4 çeşit (öğretici, %100) → 2 boş kutu: 4 çeşit %99,6, 5: %94, 6: %80, 7: %62, 8: %44, 9: %25, 10: %16 →
+  1 boş kutu: 6 çeşit %12, 7: %7, 8: %3,5, 9: %2,9, 10: %1,4. Boş kutular yalnızca azalır, aynı boş kutuyla çeşit yalnızca
+  artar. **Hiçbir bölüm 10'dan fazla lokum çeşidi kullanmaz** (görsel bütçesi; türün ortak uygulaması 8–12 renk).
 - **1 boş kutulu bölümler:** Rastgele dağıtılan tahtaların yalnızca küçük bir kısmı çözülebilir (6 çeşitte ~1/8,
   10 çeşitte ~1/135), ama çözümsüzler çözücüyle milisaniyede elendiği için çok aday denenir (8000'e kadar). Geriye
   doğru karıştırma (çözülmüş durumdan ters hamlelerle) denendi ve **işe yaramadı**: kurallar sıkı olduğu için ~10
   adımda tıkanıyor, bölümler sığ kalıyor; kod kaldırıldı.
-- **Ölçüm:** Bir bölümün üretimi 0 ms ile ~1 sn arası (1 boş kutulu 10 çeşitte birkaç sn); bu yüzden **bölümler oyun
+- **Ölçüm:** Bir bölümün üretimi 0 ms ile birkaç sn arası (1 boş kutulu 10 çeşitte daha uzun); bu yüzden **bölümler oyun
   içinde üretilmez, önceden üretilip JSON dosyası olarak oyuna konur.** Böylece bölümler sabitlenir ve üretici
   sonradan değişse de yayındaki bölümler değişmez.
 Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
@@ -95,16 +102,19 @@ Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
   önce veya bilerek kullanılır. Unity içinden: menü *Sweet Bazaar > Build Level Pack*.
 - **Doğrulama:** Testler dosyayı okur, her bölümü geçerlilik açısından denetler, örnek bölümleri çözücüyle yeniden çözer.
   Tam doğrulama (hepsini çözme, ~3 dk): `tools\run-tests.ps1 -Filter AllLevels_AreSolvable`.
-- **Durum (2026-10-01, zorlaştırılmış eğri):** 200 bölüm yeniden üretildi; hepsinin çözülebildiği, kayıtlı en kısa hamle
-  sayısının doğru olduğu ve hiçbirinde başlangıçta paketlenmiş kutu olmadığı doğrulandı. Çeşit ve en az hamle:
-  1–5: 2–3 çeşit, 4–10 hamle (ort. 6); 6–24: 3–6, 7–20 (ort. 14); 25–59: 5–9, 13–30 (ort. 22; 35 bölümün 7'si 1 boş kutulu);
-  60–100: 7–10, 21–33 (ort. 27; 41'in 17'si 1 boş kutulu); 101–200: 9–10, 24–34 (ort. 30; 100'ün 40'ı 1 boş kutulu).
-- **Bilinen sınırlar:** (1) Çeşit sayısı 10 ile sınırlı olduğundan en kısa çözüm uzunluğu ~65. bölümden sonra düzleşiyor
-  (~30); zorluk artışı 1 boş kutu oranından geliyor. Daha ileri zorluk bu belgenin 5. bölümündeki yeni mekaniklerden
-  (kapalı/kilitli kutu) gelmeli. (2) "En az hamle" insan zorluğunun kaba bir ölçüsüdür: 1 boş kutulu bölümler aynı
-  hamle sayısında çok daha zor hissettirir. (3) Zorluk sayıları tahmindir; oynayarak ayarlanacak.
-- **Ölçüm aracı:** `tools\CoreBench` (`dotnet run`) oyun mantığını Unity olmadan derler: bölüm üretimi/doğrulaması
-  (`build-levels`, `verify-levels`), `curve`, `oneempty`. Unity editörü açıkken de çalışır.
+- **Durum (2026-10-03, hedef zorluklu eğri):** 200 bölüm yeniden üretildi; hepsinin çözülebildiği, kayıtlı en kısa hamle
+  sayısının ve bot kazanma oranının doğru olduğu, başlangıçta paketlenmiş kutu olmadığı doğrulandı. Ölçülen bot kazanma
+  oranı (10 bölümlük pencere ortalaması; pencere içi en düşük–en yüksek): 1–10: %100; 21–30: %91 (87–96); 41–50: %66 (59–72);
+  61–70: %47 (41–53); 81–90: %31 (27–34); 101–110: %21 (17–26); 121–130: %16 (13–19); 141–150: %10 (7–16);
+  161–170: %8 (5–11); 191–200: %3,7 (2–6). 1 boş kutulu bölümler ~131. bölümden başlıyor (6–7 çeşit).
+- **Bilinen sınırlar:** (1) Bot bir insan değildir; "bot kazanma oranı" insan zorluğunun bir göstergesi, kesin ölçüsü
+  değil — kullanıcı geri bildirimiyle ayarlanacak. (2) ~130. bölümden sonra çeşit sayısı 10'dan 6–7'ye düşer (zorluk
+  boş kutu azlığından gelir) ve en kısa çözüm ~31'den ~20 hamleye iner; oyuncuya "geriye gidiyor" gibi gelebilir.
+  (3) Bot %0'ın altına inemez; 200. bölümden sonra zorluk ayırt edilemez, daha ileri zorluk yeni mekaniklerden
+  (kapalı/kilitli kutu, bu belgenin 5. bölümü) gelmeli. (4) İlk ~20 bölümde bot neredeyse hep kazanır (bilerek kolay).
+- **Ölçüm aracı:** `tools\CoreBench` (`dotnet run`) oyun mantığını Unity olmadan derler ve paralel çalışır:
+  `build-levels`, `verify-levels`, `difficulty` (zorluk grafiği), `cells` (ayar merdiveni), `curve`.
+  Unity editörü açıkken de çalışır.
 ## 6. Elde tutma katmanı: Dükkânın büyümesi (taslak)
 
 - Bölüm geçtikçe altın kazanılır.

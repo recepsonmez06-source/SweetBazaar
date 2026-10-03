@@ -9,11 +9,12 @@ namespace SweetBazaar.Core
     // {
     //   "formatVersion": 1,
     //   "levels": [
-    //     {"number":1,"seed":1,"boxCapacity":4,"minMoves":4,"boxes":[[0,1,0,1],[1,0,1,0],[],[]]},
+    //     {"number":1,"seed":1,"boxCapacity":4,"minMoves":4,"botWinRate":100,"boxes":[[0,1,0,1],[1,0,1,0],[],[]]},
     //     ...
     //   ]
     // }
-    // Boxes list candies bottom -> top. One level per line keeps git diffs readable.
+    // Boxes list candies bottom -> top. "botWinRate" (percent of casual-bot play-throughs won) is optional.
+    // One level per line keeps git diffs readable.
     public static class LevelPackJson
     {
         public const int FormatVersion = 1;
@@ -68,7 +69,8 @@ namespace SweetBazaar.Core
                     ReadInt(entry, "number", where),
                     ReadInt(entry, "seed", where),
                     ReadInt(entry, "minMoves", where),
-                    definition);
+                    definition,
+                    entry.ContainsKey("botWinRate") ? ReadInt(entry, "botWinRate", where) : -1);
 
                 try
                 {
@@ -88,6 +90,8 @@ namespace SweetBazaar.Core
             json.Append(",\"seed\":").Append(Format(record.Seed));
             json.Append(",\"boxCapacity\":").Append(Format(record.Definition.BoxCapacity));
             json.Append(",\"minMoves\":").Append(Format(record.MinMoves));
+            if (record.WinRate >= 0)
+                json.Append(",\"botWinRate\":").Append(Format(record.WinRate));
             json.Append(",\"boxes\":[");
 
             var boxes = record.Definition.Boxes;

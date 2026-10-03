@@ -6,12 +6,13 @@ namespace SweetBazaar.Core
     // One shipped level: its number, how it was made and its starting position.
     public sealed class LevelRecord
     {
-        public LevelRecord(int number, int seed, int minMoves, LevelDefinition definition)
+        public LevelRecord(int number, int seed, int minMoves, LevelDefinition definition, int winRate = -1)
         {
             Number = number;
             Seed = seed;
             MinMoves = minMoves;
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            WinRate = winRate;
         }
 
         public int Number { get; }
@@ -19,6 +20,10 @@ namespace SweetBazaar.Core
 
         // Length of the shortest solution when the level was made.
         public int MinMoves { get; }
+
+        // How easy the level was for the CasualBot when it was made: percent of play-throughs won
+        // (100 easy .. 0 hard), or -1 if it was not measured.
+        public int WinRate { get; }
 
         public LevelDefinition Definition { get; }
     }
@@ -65,6 +70,8 @@ namespace SweetBazaar.Core
 
                 if (record.MinMoves < 0)
                     errors.Add($"Level {record.Number}: MinMoves must not be negative.");
+                if (record.WinRate < -1 || record.WinRate > 100)
+                    errors.Add($"Level {record.Number}: WinRate must be -1 (not measured) or between 0 and 100.");
             }
             return errors;
         }

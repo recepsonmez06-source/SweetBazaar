@@ -59,9 +59,9 @@ namespace SweetBazaar.EditorTools
             for (int number = pack.Count + 1; number <= levelCount; number++)
             {
                 var generated = LevelGenerator.GenerateForLevel(number);
-                pack.Add(new LevelRecord(number, generated.Seed, generated.MinMoves, generated.Level));
-                Debug.Log($"Level {number}: {generated.Level.Boxes.Count} boxes, " +
-                          $"{generated.MinMoves} moves, {generated.Attempts} attempt(s)");
+                pack.Add(new LevelRecord(number, generated.Seed, generated.MinMoves, generated.Level, generated.WinRate));
+                Debug.Log($"Level {number}: {generated.Level.Boxes.Count} boxes, {generated.MinMoves} moves, " +
+                          $"bot wins {generated.WinRate}%, {generated.Attempts} attempt(s)");
             }
 
             var errors = pack.Validate();

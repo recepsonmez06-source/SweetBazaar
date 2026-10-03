@@ -16,6 +16,17 @@ namespace SweetBazaar.Core
         public int MinMoves { get; set; }
         public int MaxMoves { get; set; } = int.MaxValue;
 
+        // Wanted difficulty as the share (percent) of play-throughs the CasualBot wins: 100 = very easy,
+        // 0 = very hard. A candidate is accepted when its measured rate is within WinRateTolerance of the target.
+        // -1 switches this check off.
+        public int TargetWinRate { get; set; } = -1;
+        public int WinRateTolerance { get; set; } = 4;
+
+        // Play-throughs per measurement. Fewer are tried first as a cheap pre-check (they are the first ones of the
+        // full set), so most candidates are rejected without the full cost.
+        public int BotTrials { get; set; } = 100;
+        public int BotPrefilterTrials { get; set; } = 20;
+
         // Solver limit per candidate; a candidate the solver cannot decide within it is discarded.
         public int SolverStateLimit { get; set; } = 300000;
 
@@ -42,6 +53,12 @@ namespace SweetBazaar.Core
                 errors.Add("SolverStateLimit must be at least 1.");
             if (MaxAttempts < 1)
                 errors.Add("MaxAttempts must be at least 1.");
+            if (TargetWinRate < -1 || TargetWinRate > 100)
+                errors.Add("TargetWinRate must be -1 (off) or between 0 and 100.");
+            if (WinRateTolerance < 0)
+                errors.Add("WinRateTolerance must not be negative.");
+            if (BotTrials < 1 || BotPrefilterTrials < 1 || BotPrefilterTrials > BotTrials)
+                errors.Add("BotTrials and BotPrefilterTrials must be at least 1, and the pre-check must not exceed the full count.");
 
             return errors;
         }

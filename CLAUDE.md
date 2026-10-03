@@ -58,7 +58,8 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - **Unity'siz hızlı kontrol (editör açıkken de çalışır):** `dotnet run -c Release --project tools\CoreBench -- <komut>` —
   `curve 1 80` (bölüm üretim istatistiği), `verify-levels <levels.json>` (tüm bölümleri yeniden çöz),
   `build-levels <levels.json> <adet> [rebuild]` (bölüm dosyasını Unity'siz üret; varsayılan yalnızca ekler), `oneempty`.
-  Bölüm dosyasını değiştirdiysen `verify-levels` çalıştır. Unity testleri yine de (editör kapalıyken) çalıştırılmalı.
+  `difficulty <levels.json> [pencere]` zorluk grafiği, `cells` ayar merdiveni, `curve 1 80` üretim istatistiği. Bölüm dosyasını
+  değiştirdiysen `verify-levels` çalıştır. Unity testleri yine de (editör kapalıyken) çalıştırılmalı.
 - **Kullanıcı Unity'de Play'deyken betik dosyası DEĞİŞTİRME:** editör oyun çalışırken yeniden derler ve oyunun çalışma
   anı durumu sıfırlanır (NullReferenceException yağar). Önce sor/bekle ya da yalnızca bölüm/doküman dosyalarına dokun.
 - **Başka editör metodu çalıştırma:** `tools\run-editor-method.ps1 -Method <Ad.Alan.Metot> [-Graphics]`.
@@ -131,19 +132,14 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
   (`Resources/Levels/levels.json`, yalnızca ekleyen üretim). Lokum çeşidi en çok 10.
 - [x] Zorluk eğrisi güçlendirildi: 25'ten itibaren 1 boş kutulu zor bölümler (200 bölümün 64'ü); 200 bölüm yeniden
   üretildi ve `verify-levels` ile doğrulandı. Unity testleri editör kapanınca çalıştırılacak (bkz. aşağıdaki not).
-- [ ] Açık: ~65. bölümden sonra en kısa çözüm uzunluğu düzleşiyor (yeni mekanik gerekir)
-- [ ] **YARIN İLK İŞ (2026-10-02): zorluk eğrisi.** Kullanıcı geri bildirimi (2026-10-01 gece, Simulator'da denedikten sonra):
-  *"level arttıkça zorlaşmıyor, hatta ara ara çok basit level geliyor."* Önce hangi bölüm numaralarının basit
-  hissettirdiğini sor. Olası nedenler: (a) kullanıcı **eski** bölümleri oynamış olabilir: yeni `levels.json` 22:33'te
-  üretildi, Play açıktı ve bölümler başlangıçta yüklenir; (b) "rahatlatıcı" bölümler (her 5.+1) bilerek kolay, ama
-  kullanıcı bunu istemiyor olabilir; (c) en az hamle sayısı (~3/çeşit) algılanan zorluğu kötü ölçüyor; (d) 2 boş kutulu
-  bölümler çeşit sayısından bağımsız rahat; (e) 65'ten sonra düz. Fikirler: rahatlatıcıyı kaldır ya da çok hafiflet; hiçbir
-  bölüm önceki 5'in ortalamasından belirgin kolay olmasın; daha iyi zorluk ölçütü (çözücüyle: ölü uç/çıkmaz oranı,
-  rastgele oynayan birinin başarı oranı, başlangıçtaki geçerli hamle sayısı); 1 boş kutuyu daha erken ve daha sık
-  kullan; yeni mekanik (kapalı/kilitli kutu) ekle. Yeni eğri sonrası `levels.json`'u baştan üret (yayın öncesi serbest).
-- [ ] **Yarın da ilk iş:** Unity testlerini (EditMode ve `-Platform PlayMode`) çalıştır; son değişiklikler (yeni zorluk
-  eğrisi, `InputTapTests`, `GameController.Update` koruması) editör açıkken yazıldığı için Unity'de henüz koşturulmadı.
-  Core mantığı `tools\CoreBench` ile doğrulandı (200 bölümün hepsi çözülebilir, en az hamle doğru).
+- [x] **Zorluk sistemi yeniden kuruldu (2026-10-03):** zorluk CasualBot kazanma oranıyla ölçülüyor; LevelCurve her bölüme
+  düşen bir hedef veriyor, üretici hedefe ±4 puan yakın bölümleri kabul ediyor; rahatlatıcı bölüm yok. 200 bölüm yeniden
+  üretildi, erify-levels ve Unity testleri (EditMode 160, PlayMode 19) geçti. Ayrıntı: TASARIM.md bölüm 5.
+- [ ] **Kullanıcı geri bildirimi bekleniyor:** Yeni bölümler (Unity'de Play, Main sahnesi; kayıtlı ilerleme varsa bölüm
+  numarasını başa almak için PlayerPrefs'i silmek gerekebilir) gerçekten giderek zorlaşıyor ve "çok basit" bölüm kalmadı mı?
+  Hangi bölümler çok kolay/zor geldi? Bot ayarı (CasualBot) ve hedef noktaları buna göre ayarlanır.
+- [ ] Açık: ~130. bölümden sonra çeşit sayısı 6–7'ye düşüyor (zorluk boş kutu azlığından); 200'den sonra zorluk ayırt
+  edilemiyor (yeni mekanik gerekir). Telefonda APK denemesi (bkz. Android APK notu).
 - [x] Çok dil altyapısı: `Localizer` + `Resources/Localization/{en,tr}.json`; metinler yalnızca `LocKeys` anahtarlarıyla
 - [x] Unity tarafı (E): tahta görünümü, dokunma girişi, animasyonlar, arayüz, ana sahne (`Scenes/Main.unity`);
   ilk oynanabilir sürüm. Yer tutucu (kodla çizilen) görseller; 15 PlayMode + 140 EditMode test geçiyor

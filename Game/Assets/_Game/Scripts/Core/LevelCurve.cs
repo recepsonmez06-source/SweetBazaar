@@ -2,133 +2,97 @@ using System;
 
 namespace SweetBazaar.Core
 {
-    // Maps a level number to a DifficultyProfile. This table is the one place to tune difficulty.
-    // Shape (docs/TASARIM.md section 5): a short tutorial, then a gradual climb with a wave on top: every 5th level
-    // is a hard one and the level after it a breather. Later stages make hard levels harder by taking away empty boxes,
-    // which is the classic way sort puzzles get difficult.
+    // Maps a level number to a DifficultyProfile. This file is the one place to tune difficulty.
+    //
+    // Difficulty is measured with the CasualBot: the share of play-throughs it wins (100 = very easy, 0 = very hard).
+    // Each level gets a TARGET win rate that only ever goes down as the level number grows, and the generator keeps
+    // only levels that land close to it. That is what makes the game get steadily harder without "very easy" levels
+    // popping up between hard ones: random levels of one setting vary a lot (e.g. 8 types / 2 empty boxes: from
+    // 7% to 90%), the target band removes that variation.
     public static class LevelCurve
     {
-        private readonly struct Stage
+        // Wanted CasualBot win rate (percent) at some level numbers; straight lines in between, flat after the last.
+        private static readonly (int level, double winRate)[] TargetPoints =
         {
-            public Stage(int firstLevel, int minTypes, int maxTypes, int rampLevels, int emptyBoxes,
-                int maxMovesPerType, int hardEmptyBoxes, bool alsoHardOnThirdLevel)
-            {
-                FirstLevel = firstLevel;
-                MinTypes = minTypes;
-                MaxTypes = maxTypes;
-                RampLevels = rampLevels;
-                EmptyBoxes = emptyBoxes;
-                MaxMovesPerType = maxMovesPerType;
-                HardEmptyBoxes = hardEmptyBoxes;
-                AlsoHardOnThirdLevel = alsoHardOnThirdLevel;
-            }
-
-            public int FirstLevel { get; }
-
-            // Candy types grow from MinTypes to MaxTypes over RampLevels levels, then stay at MaxTypes.
-            public int MinTypes { get; }
-            public int MaxTypes { get; }
-            public int RampLevels { get; }
-
-            public int EmptyBoxes { get; }
-
-            // Upper bound on the shortest solution per candy type (0 = no bound); keeps tutorial levels short.
-            public int MaxMovesPerType { get; }
-
-            // Empty boxes on hard levels. Fewer than EmptyBoxes means hard levels are made harder by taking boxes
-            // away (instead of adding a candy type); 0 means "same as EmptyBoxes" (hard = one more type).
-            public int HardEmptyBoxes { get; }
-
-            // Also treat every level that is the 3rd of a group of 5 as hard (late stages only).
-            public bool AlsoHardOnThirdLevel { get; }
-        }
-
-        // Ordered by FirstLevel. A level uses the last stage that has started.
-        private static readonly Stage[] Stages =
-        {
-            new Stage(firstLevel: 1,  minTypes: 2, maxTypes: 3,  rampLevels: 4,  emptyBoxes: 3, maxMovesPerType: 4, hardEmptyBoxes: 0, alsoHardOnThirdLevel: false),
-            new Stage(firstLevel: 6,  minTypes: 3, maxTypes: 6,  rampLevels: 18, emptyBoxes: 2, maxMovesPerType: 0, hardEmptyBoxes: 0, alsoHardOnThirdLevel: false),
-            new Stage(firstLevel: 25, minTypes: 6, maxTypes: 9,  rampLevels: 35, emptyBoxes: 2, maxMovesPerType: 0, hardEmptyBoxes: 1, alsoHardOnThirdLevel: false),
-            new Stage(firstLevel: 60, minTypes: 8, maxTypes: 10, rampLevels: 40, emptyBoxes: 2, maxMovesPerType: 0, hardEmptyBoxes: 1, alsoHardOnThirdLevel: true),
+            (1, 100), (10, 100), (20, 96), (30, 86), (45, 66), (65, 46), (90, 28), (120, 16), (160, 9), (200, 5.5), (400, 3),
         };
+
+        // Settings from easy to hard, with how hard random levels of that setting typically are: the mean CasualBot
+        // win rate over 120 random solvable levels (measured with `tools\CoreBench cells`). The order is monotone:
+        // empty boxes only go down and, with the same number of empty boxes, candy types only go up.
+        private static readonly (int types, int emptyBoxes, double meanWinRate)[] Ladder =
+        {
+            (4, 2, 99.6), (5, 2, 94.1), (6, 2, 79.7), (7, 2, 61.5), (8, 2, 44.1), (9, 2, 25.0), (10, 2, 15.7),
+            (6, 1, 12.1), (7, 1, 6.9), (8, 1, 3.5), (9, 1, 2.9), (10, 1, 1.4),
+        };
+
+        // Tutorial levels (target at or above this) use 3 empty boxes and 2..4 candy types.
+        private const double TutorialTarget = 99.5;
+        private const int TutorialEmptyBoxes = 3;
+        private const int TutorialMaxMovesPerType = 4;
 
         // Art budget: no level uses more candy types than this. Beyond it, difficulty is meant to come from
         // new mechanics (closed / locked boxes, docs/TASARIM.md section 5), not from ever more candy types.
         public const int MaxCandyTypes = 10;
 
-        private const int SingleEmptyBoxAttempts = 8000;
+        // Candidates tried per level. One empty box with many types needs thousands (most random deals are unsolvable).
+        private const int MaxAttempts = 8000;
 
-        private const int TutorialLevels = 5;
-        private const int WavePeriod = 5;
-        // A breather never drops below the tutorial's last level, so the game does not get easier right after it.
-        private const int MinTypesAfterBreather = 3;
+        // Accepted distance (percentage points) between a level's measured and its target win rate.
+        private const int Tolerance = 4;
 
-        // The shortest solution should take at least this many moves per candy type, in tenths (25 = 2.5).
-        // A random deal of a normal level typically needs about 3 per type, so 2.5 only rejects the easiest deals.
-        private const int TutorialMinMovesTenths = 20;
-        private const int NormalMinMovesTenths = 25;
-        private const int HardMinMovesTenths = 33;
-        private const int SingleEmptyBoxMinMovesTenths = 28;
-
-        public static DifficultyProfile GetProfile(int levelNumber)
+        // Wanted CasualBot win rate (percent) for a level.
+        public static double TargetWinRate(int levelNumber)
         {
             if (levelNumber < 1)
                 throw new ArgumentOutOfRangeException(nameof(levelNumber), "Level numbers start at 1.");
 
-            var stage = Stages[0];
-            foreach (var candidate in Stages)
+            for (int i = 1; i < TargetPoints.Length; i++)
             {
-                if (levelNumber >= candidate.FirstLevel)
-                    stage = candidate;
+                if (levelNumber > TargetPoints[i].level)
+                    continue;
+
+                var from = TargetPoints[i - 1];
+                var to = TargetPoints[i];
+                double progress = (double)(levelNumber - from.level) / (to.level - from.level);
+                return from.winRate + (to.winRate - from.winRate) * progress;
             }
+            return TargetPoints[TargetPoints.Length - 1].winRate;
+        }
 
-            int into = Math.Min(levelNumber - stage.FirstLevel, stage.RampLevels);
-            int types = stage.MinTypes;
-            if (stage.RampLevels > 0)
+        public static DifficultyProfile GetProfile(int levelNumber)
+        {
+            double target = TargetWinRate(levelNumber);
+
+            int types, emptyBoxes, maxMoves;
+            if (target >= TutorialTarget)
             {
-                // rounded, so a 2 -> 3 ramp switches half way instead of at the very end
-                types += ((stage.MaxTypes - stage.MinTypes) * into * 2 / stage.RampLevels + 1) / 2;
+                types = Math.Min(4, 2 + (levelNumber - 1) / 2);
+                emptyBoxes = TutorialEmptyBoxes;
+                maxMoves = types * TutorialMaxMovesPerType;
             }
-
-            bool inWave = levelNumber > TutorialLevels;
-            bool hard = inWave && (levelNumber % WavePeriod == 0
-                || (stage.AlsoHardOnThirdLevel && levelNumber % WavePeriod == 3));
-            bool breather = inWave && levelNumber % WavePeriod == 1;
-
-            int emptyBoxes = stage.EmptyBoxes;
-            int minMovesTenths = inWave ? NormalMinMovesTenths : TutorialMinMovesTenths;
-
-            if (hard)
+            else
             {
-                minMovesTenths = HardMinMovesTenths;
-                if (stage.HardEmptyBoxes > 0 && stage.HardEmptyBoxes < stage.EmptyBoxes)
+                var setting = Ladder[0];
+                foreach (var candidate in Ladder)
                 {
-                    // The difficulty comes from the missing empty box, so the solution length needs not be extreme;
-                    // asking for 3.3 moves per type would almost never be met at 10 types (measured median is 3.0).
-                    emptyBoxes = stage.HardEmptyBoxes;
-                    minMovesTenths = SingleEmptyBoxMinMovesTenths;
+                    if (Math.Abs(candidate.meanWinRate - target) < Math.Abs(setting.meanWinRate - target))
+                        setting = candidate;
                 }
-                else
-                {
-                    types++;
-                }
+                types = setting.types;
+                emptyBoxes = setting.emptyBoxes;
+                maxMoves = int.MaxValue;
             }
-            else if (breather)
-            {
-                types = Math.Max(MinTypesAfterBreather, types - 1);
-            }
-
-            types = Math.Min(types, MaxCandyTypes);
 
             return new DifficultyProfile
             {
-                CandyTypes = types,
+                CandyTypes = Math.Min(types, MaxCandyTypes),
                 EmptyBoxes = emptyBoxes,
-                MinMoves = types * minMovesTenths / 10,
-                MaxMoves = stage.MaxMovesPerType > 0 ? types * stage.MaxMovesPerType : int.MaxValue,
-
-                // Measured: with one empty box roughly 1 deal in 8 is solvable at 6 types and 1 in 135 at 10 types.
-                MaxAttempts = emptyBoxes < 2 ? SingleEmptyBoxAttempts : 200,
+                MinMoves = types * 2,               // only a sanity floor; difficulty is steered by the win rate
+                MaxMoves = maxMoves,
+                TargetWinRate = (int)Math.Round(target),
+                WinRateTolerance = Tolerance,
+                MaxAttempts = MaxAttempts,
             };
         }
     }

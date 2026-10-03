@@ -28,6 +28,10 @@ namespace SweetBazaar.Core
                 if (HasClosedBox(board))
                     continue;
 
+                // Cheap difficulty pre-check first: it rejects most candidates for a fraction of the solver's cost.
+                if (profile.TargetWinRate >= 0 && !PassesPrefilter(board, profile, seed))
+                    continue;
+
                 var result = Solver.Solve(board, solverOptions);
                 if (result.Status != SolveStatus.Solved)
                     continue;
@@ -36,7 +40,15 @@ namespace SweetBazaar.Core
                 if (moves < profile.MinMoves || moves > profile.MaxMoves)
                     continue;
 
-                return new GeneratedLevel(level, seed, moves, attempt + 1);
+                int winRate = -1;
+                if (profile.TargetWinRate >= 0)
+                {
+                    winRate = CasualBot.WinRatePercent(board, profile.BotTrials, BotSeed(seed));
+                    if (Math.Abs(winRate - profile.TargetWinRate) > profile.WinRateTolerance)
+                        continue;
+                }
+
+                return new GeneratedLevel(level, seed, moves, attempt + 1, winRate);
             }
 
             throw new InvalidOperationException(
@@ -46,6 +58,22 @@ namespace SweetBazaar.Core
         // The level for a level number, following LevelCurve. The level number is the seed.
         public static GeneratedLevel GenerateForLevel(int levelNumber) =>
             Generate(LevelCurve.GetProfile(levelNumber), levelNumber);
+
+        // How easy a level is for the CasualBot: percent of play-throughs won. The bot plays the same way every time
+        // for a given level seed, so the number is stable and can be checked again later.
+        public static int MeasureWinRate(Board board, int seed, int trials) =>
+            CasualBot.WinRatePercent(board, trials, BotSeed(seed));
+
+        private static ulong BotSeed(int seed) => 0xB07UL * 1000003UL + (ulong)(uint)seed;
+
+        // With few trials the measured rate is noisy (up to about 11 points of standard deviation for 20 trials),
+        // so the pre-check only rejects candidates that are far outside the wanted band.
+        private static bool PassesPrefilter(Board board, DifficultyProfile profile, int seed)
+        {
+            int quick = CasualBot.WinRatePercent(board, profile.BotPrefilterTrials, BotSeed(seed));
+            int slack = (int)(125.0 / Math.Sqrt(profile.BotPrefilterTrials));
+            return Math.Abs(quick - profile.TargetWinRate) <= profile.WinRateTolerance + slack;
+        }
 
         private static ulong Mix(int seed, int attempt)
         {

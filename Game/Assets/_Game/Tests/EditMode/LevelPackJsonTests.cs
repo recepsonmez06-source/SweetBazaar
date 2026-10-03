@@ -40,6 +40,30 @@ namespace SweetBazaar.Core.Tests
         }
 
         [Test]
+        public void TheMeasuredDifficulty_RoundTripsAndIsOptional()
+        {
+            var pack = new LevelPack();
+            pack.Add(new LevelRecord(1, 1, 4, new LevelDefinition { BoxCapacity = 2, Boxes = new List<int[]> { new[] { 0, 1 }, new[] { 1, 0 }, new int[0] } }, winRate: 37));
+            pack.Add(Record(2, 2, 7, 2, new[] { 0, 0 }, new[] { 1 }, new[] { 1 }));
+
+            string json = LevelPackJson.Serialize(pack);
+            var parsed = LevelPackJson.Parse(json);
+
+            Assert.AreEqual(37, parsed.Get(1).WinRate);
+            Assert.AreEqual(-1, parsed.Get(2).WinRate, "levels without a measurement stay unmeasured");
+            StringAssert.Contains("\"botWinRate\":37", json);
+        }
+
+        [Test]
+        public void ADifficultyOutsideZeroToHundred_IsReportedByValidate()
+        {
+            var pack = new LevelPack();
+            pack.Add(new LevelRecord(1, 1, 4, new LevelDefinition { BoxCapacity = 2, Boxes = new List<int[]> { new[] { 0, 1 }, new[] { 1, 0 }, new int[0] } }, winRate: 140));
+
+            Assert.That(pack.Validate(), Has.Some.Contains("WinRate"));
+        }
+
+        [Test]
         public void EmptyPack_RoundTrips()
         {
             var parsed = LevelPackJson.Parse(LevelPackJson.Serialize(new LevelPack()));
