@@ -62,6 +62,8 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
   değiştirdiysen `verify-levels` çalıştır. Unity testleri yine de (editör kapalıyken) çalıştırılmalı.
 - **Kullanıcı Unity'de Play'deyken betik dosyası DEĞİŞTİRME:** editör oyun çalışırken yeniden derler ve oyunun çalışma
   anı durumu sıfırlanır (NullReferenceException yağar). Önce sor/bekle ya da yalnızca bölüm/doküman dosyalarına dokun.
+- **Belirli bir bölümü denemek:** Unity'de `Main` sahnesinde *Game* nesnesini seç, Inspector'daki *Debug Start Level* kutusuna bölüm
+  numarasını yaz, Play (kayıtlı ilerlemeye dokunmaz). Kayıtlı bölümü silmek için menü *Sweet Bazaar > Reset Saved Level*.
 - **Başka editör metodu çalıştırma:** `tools\run-editor-method.ps1 -Method <Ad.Alan.Metot> [-Graphics]`.
 - **Bölüm dosyası üretme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-levels.ps1 [-Count 200] [-Rebuild]`
   (editör kapalıyken). Varsayılan yalnızca ekler; `-Rebuild` yayındaki bölümleri değiştirir, kullanıcıya sormadan kullanma.

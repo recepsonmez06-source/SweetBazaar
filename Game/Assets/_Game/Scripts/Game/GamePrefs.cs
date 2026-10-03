@@ -18,6 +18,13 @@ namespace SweetBazaar.Game
             }
         }
 
+        // Forgets the saved level (the next start is level 1). The chosen language stays.
+        public static void ResetProgress()
+        {
+            PlayerPrefs.DeleteKey(LevelKey);
+            PlayerPrefs.Save();
+        }
+
         // Null until the player has picked a language.
         public static string Language
         {

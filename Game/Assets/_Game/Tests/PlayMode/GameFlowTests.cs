@@ -189,6 +189,60 @@ namespace SweetBazaar.Game.PlayTests
         }
 
         [UnityTest]
+        public IEnumerator TheDebugStartLevelStartsThereAndLeavesTheSavedProgressAlone()
+        {
+            const string levelKey = "level.current";
+            bool hadLevel = PlayerPrefs.HasKey(levelKey);
+            int level = PlayerPrefs.GetInt(levelKey, 1);
+
+            try
+            {
+                PlayerPrefs.SetInt(levelKey, 7);
+
+                var root = new GameObject("Game");
+                _bootstrap = root.AddComponent<GameBootstrap>();
+                typeof(GameBootstrap).GetField("debugStartLevel", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .SetValue(_bootstrap, 42);
+                var controller = _bootstrap.Initialize();
+                yield return null;
+
+                Assert.AreEqual(42, controller.LevelNumber, "the debug level wins over the saved one");
+                Assert.AreEqual(7, PlayerPrefs.GetInt(levelKey, 0), "and the saved progress is not overwritten");
+            }
+            finally
+            {
+                if (hadLevel) PlayerPrefs.SetInt(levelKey, level); else PlayerPrefs.DeleteKey(levelKey);
+                PlayerPrefs.Save();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ResettingTheSavedLevelMakesTheNextStartLevelOne()
+        {
+            const string levelKey = "level.current";
+            bool hadLevel = PlayerPrefs.HasKey(levelKey);
+            int level = PlayerPrefs.GetInt(levelKey, 1);
+
+            try
+            {
+                PlayerPrefs.SetInt(levelKey, 12);
+                GameBootstrap.ResetSavedProgress();
+
+                var root = new GameObject("Game");
+                _bootstrap = root.AddComponent<GameBootstrap>();
+                var controller = _bootstrap.Initialize();   // persisting on, no start level given
+                yield return null;
+
+                Assert.AreEqual(1, controller.LevelNumber);
+            }
+            finally
+            {
+                if (hadLevel) PlayerPrefs.SetInt(levelKey, level); else PlayerPrefs.DeleteKey(levelKey);
+                PlayerPrefs.Save();
+            }
+        }
+
+        [UnityTest]
         public IEnumerator TheLastLevelWrapsAroundToTheFirst()
         {
             var controller = StartGame(1);

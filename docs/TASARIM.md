@@ -202,6 +202,8 @@ Karar ve davranışlar bu türün (su/top sıralama oyunları) yaygın uygulamal
   karşılığı). Geri al, ekstra kutuyu da geri alır ve hakkı geri verir. Reklam bağlantısı sonraki adım.
 - **İlerleme:** Bulunulan bölüm ve seçilen dil cihazda saklanır. Son bölümden sonra bölüm 1'e dönülür (yeni
   bölümler eklendikçe uzar).
+  **Test kolaylığı:** Unity'de "Game" nesnesini seçip Inspector'daki *Debug Start Level* kutusuna bir sayı yazınca oyun o bölümden
+  başlar ve kayıtlı ilerlemeye/dile dokunmaz; menü *Sweet Bazaar > Reset Saved Level* kayıtlı bölümü unutturur (sonraki başlangıç bölüm 1).
 - **Görsel:** Henüz yer tutucu; lokumlar, kutu ve paket kodla çizilir. Her çeşit hem renkle hem desenle ayırt edilir
   (nokta, parça, benek, tohum, çapraz çizgi, yatay çizgi, halka, artı, dama, baklava) — renk körü oyuncular için.
   Gerçek görseller gelince yalnızca `CandyArt` değişir. **Ses yok** (ses dosyaları gerekir; sonraki adım).

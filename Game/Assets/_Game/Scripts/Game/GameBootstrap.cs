@@ -16,8 +16,15 @@ namespace SweetBazaar.Game
         // Tests and preview tools switch this off so they do not overwrite the player's saved progress.
         public bool PersistProgress { get; set; } = true;
 
+        // Testing aid: select the "Game" object and type a level number here to start on that level instead of the
+        // saved one. While it is set (> 0), nothing is saved, so the real saved level and language stay untouched.
+        [SerializeField] private int debugStartLevel;
+
         // Set before Initialize to start on a specific level instead of the saved one.
         public int StartLevel { get; set; }
+
+        // Forgets the saved level, so the next start is level 1.
+        public static void ResetSavedProgress() => GamePrefs.ResetProgress();
 
         public GameController Controller { get; private set; }
 
@@ -29,6 +36,12 @@ namespace SweetBazaar.Game
 
         public GameController Initialize()
         {
+            if (debugStartLevel > 0)
+            {
+                StartLevel = debugStartLevel;
+                PersistProgress = false;
+            }
+
             if (Application.isPlaying)
             {
                 Application.targetFrameRate = 60;
