@@ -148,20 +148,25 @@ namespace SweetBazaar.Game
             var centerAnchor = new Vector2(0.5f, 0.5f);
 
             // ---- top bar ----
-            _levelText = UiKit.NewText("Level", _safeArea, 68, FontStyle.Bold, TextAnchor.MiddleCenter);
-            UiKit.Place(_levelText.rectTransform, topCenter, topCenter, new Vector2(0, -50), new Vector2(560, 100));
+            // the level number on a wooden plate
+            UiKit.NewPlate("LevelPlate", _safeArea, topCenter, new Vector2(0, -24), new Vector2(400, 116), UiKit.Hex(0xB36A32));
+            _levelText = UiKit.NewText("Level", _safeArea, 64, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            UiKit.Place(_levelText.rectTransform, topCenter, topCenter, new Vector2(0, -34), new Vector2(380, 90));
+            UiKit.AddOutline(_levelText, 4f);
 
             _movesText = UiKit.NewText("Moves", _safeArea, 40, FontStyle.Normal, TextAnchor.MiddleCenter);
-            UiKit.Place(_movesText.rectTransform, topCenter, topCenter, new Vector2(0, -150), new Vector2(560, 60));
+            UiKit.Place(_movesText.rectTransform, topCenter, topCenter, new Vector2(0, -152), new Vector2(560, 60));
 
-            var coin = UiKit.NewCoin("Coin", _safeArea, 64);
-            UiKit.Place(coin, topLeft, centerAnchor, new Vector2(60, -62), new Vector2(64, 64));
-            _goldText = UiKit.NewText("Gold", _safeArea, 52, FontStyle.Bold, TextAnchor.MiddleLeft);
-            UiKit.Place(_goldText.rectTransform, topLeft, new Vector2(0f, 0.5f), new Vector2(104, -62), new Vector2(190, 70));
+            // the gold counter in a dark capsule, the coin sitting on its left end
+            UiKit.NewPill("GoldPill", _safeArea, topLeft, new Vector2(24, -30), new Vector2(250, 80), new Color(0.27f, 0.14f, 0.05f, 0.9f));
+            var coin = UiKit.NewCoin("Coin", _safeArea, 78);
+            UiKit.Place(coin, topLeft, centerAnchor, new Vector2(60, -70), new Vector2(78, 78));
+            _goldText = UiKit.NewText("Gold", _safeArea, 50, FontStyle.Bold, TextAnchor.MiddleLeft, Color.white);
+            UiKit.Place(_goldText.rectTransform, topLeft, new Vector2(0f, 0.5f), new Vector2(112, -70), new Vector2(190, 70));
             _goldText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
             _shopButton = UiKit.NewButton("Shop", _safeArea, out _shopLabel, 40);
-            UiKit.Place((RectTransform)_shopButton.transform, topLeft, topLeft, new Vector2(24, -112), new Vector2(240, 96));
+            UiKit.Place((RectTransform)_shopButton.transform, topLeft, topLeft, new Vector2(24, -124), new Vector2(240, 100));
 
             _languageButton = UiKit.NewButton("Language", _safeArea, out _languageLabel, 34);
             UiKit.Place((RectTransform)_languageButton.transform, topRight, topRight, new Vector2(-24, -34), new Vector2(230, 90));
@@ -253,7 +258,7 @@ namespace SweetBazaar.Game
                 _placeButtons[i] = button;
                 _placeBackgrounds[i] = button.GetComponent<Image>();
                 _placeLabels[i].verticalOverflow = VerticalWrapMode.Truncate;
-                _placeLabels[i].rectTransform.offsetMin = new Vector2(6, 6);
+                _placeLabels[i].rectTransform.offsetMin = new Vector2(6, UiArt.ButtonLip + 4);
                 _placeLabels[i].rectTransform.offsetMax = new Vector2(-6, -6);
 
                 // a small disc in the corner: green when the place is built, grey when it still has to be built

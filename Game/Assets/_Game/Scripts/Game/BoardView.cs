@@ -15,6 +15,7 @@ namespace SweetBazaar.Game
         private const int MaxColumnsPerRow = 4;
 
         private readonly List<BoxView> _boxes = new List<BoxView>();
+        private readonly List<GameObject> _shelves = new List<GameObject>();
 
         public IReadOnlyList<BoxView> Boxes => _boxes;
 
@@ -148,6 +149,10 @@ namespace SweetBazaar.Game
             int columns = Mathf.CeilToInt(count / (float)rows);
             float boxHeight = _boxes[0].Height;
 
+            foreach (var shelf in _shelves)
+                Objects.Dispose(shelf);
+            _shelves.Clear();
+
             for (int i = 0; i < count; i++)
             {
                 int row = i / columns;
@@ -158,6 +163,40 @@ namespace SweetBazaar.Game
                 float y = (rows - 1 - row) * (boxHeight + RowGap);
                 _boxes[i].transform.localPosition = new Vector3(x, y, 0f);
             }
+
+            // every row stands on a wooden shelf
+            for (int row = 0; row < rows; row++)
+            {
+                int inThisRow = Mathf.Min(columns, count - row * columns);
+                float width = (inThisRow - 1) * ColumnPitch + CandyArt.BoxWidth + 0.34f;
+                float y = (rows - 1 - row) * (boxHeight + RowGap);
+                _shelves.Add(CreateShelf(row, width, y));
+            }
+        }
+
+        private GameObject CreateShelf(int row, float width, float boxBottom)
+        {
+            const float height = 0.3f;
+            var go = new GameObject("Shelf " + row);
+            go.transform.SetParent(transform, false);
+            // the top of the plank sits a little above the box bottoms, so the boxes look as if they stand on it
+            go.transform.localPosition = new Vector3(0f, boxBottom + 0.06f - height * 0.5f, 0f);
+
+            var shadow = new GameObject("Shadow").AddComponent<SpriteRenderer>();
+            shadow.transform.SetParent(go.transform, false);
+            shadow.sprite = UiArt.SoftShadow();
+            shadow.drawMode = SpriteDrawMode.Sliced;
+            shadow.size = new Vector2(width + 0.3f, height + 0.3f);
+            shadow.color = new Color(0.2f, 0.08f, 0f, 0.35f);
+            shadow.sortingOrder = SortingOrders.Shelf - 1;
+            shadow.transform.localPosition = new Vector3(0f, -0.1f, 0f);
+
+            var plank = go.AddComponent<SpriteRenderer>();
+            plank.sprite = UiArt.Plank();
+            plank.drawMode = SpriteDrawMode.Sliced;
+            plank.size = new Vector2(width, height);
+            plank.sortingOrder = SortingOrders.Shelf;
+            return go;
         }
 
         private IEnumerator Transfer(int sourceIndex, int targetIndex, int count)

@@ -8,8 +8,11 @@ namespace SweetBazaar.Game
     // Sorting orders: frame < candies < lifted/flying candies < parcel < parcel label.
     internal static class SortingOrders
     {
+        public const int Shelf = -6;
+        public const int Shadow = -4;
         public const int Frame = 0;
         public const int Candy = 10;
+        public const int Gloss = 12;
         public const int CandyRaised = 20;
         public const int Parcel = 30;
         public const int ParcelLabel = 31;
@@ -82,8 +85,20 @@ namespace SweetBazaar.Game
             var view = go.AddComponent<BoxView>();
             view.Capacity = box.Capacity;
 
+            // a soft shadow on the shelf, a little to the lower right of the box
+            var shadow = AddRenderer(go.transform, "Shadow", UiArt.SoftShadow(), SortingOrders.Shadow);
+            shadow.drawMode = SpriteDrawMode.Sliced;
+            shadow.size = new Vector2(CandyArt.BoxWidth + 0.34f, view.Height + 0.26f);
+            shadow.color = new Color(0.2f, 0.08f, 0f, 0.38f);
+            shadow.transform.localPosition = new Vector3(0.05f, view.Height * 0.5f - 0.08f, 0f);
+
             view._frame = AddRenderer(go.transform, "Frame", CandyArt.BoxFrame(box.Capacity), SortingOrders.Frame);
             ArtLibrary.FitBottomCenter(view._frame, CandyArt.BoxWidth, view.Height);
+
+            // reflections over the candies, like the glass of a display jar
+            var gloss = CandyArt.BoxGloss(box.Capacity);
+            if (gloss != null)
+                AddRenderer(go.transform, "Gloss", gloss, SortingOrders.Gloss);
 
             view._parcel = AddRenderer(go.transform, "Parcel", CandyArt.Package(box.Capacity), SortingOrders.Parcel);
             ArtLibrary.FitBottomCenter(view._parcel, CandyArt.BoxWidth, view.Height);

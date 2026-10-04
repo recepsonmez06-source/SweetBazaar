@@ -55,6 +55,7 @@ namespace SweetBazaar.Game
         private static readonly Dictionary<int, Sprite> Candies = new Dictionary<int, Sprite>();
         private static readonly Dictionary<int, Sprite> Frames = new Dictionary<int, Sprite>();
         private static readonly Dictionary<int, Sprite> Packages = new Dictionary<int, Sprite>();
+        private static readonly Dictionary<int, Sprite> Glosses = new Dictionary<int, Sprite>();
 
         public static Color BaseColor(int type) => BaseColors[Mathf.Abs(type) % TypeCount];
 
@@ -82,6 +83,43 @@ namespace SweetBazaar.Game
             if (!Frames.TryGetValue(capacity, out var sprite) || sprite == null)
                 Frames[capacity] = sprite = BuildFrame(capacity);
             return sprite;
+        }
+
+        // Glass-like reflections laid over the candies of a box (a light streak on the left, a faint one on the right).
+        // Null when real box artwork is used, which brings its own shine.
+        public static Sprite BoxGloss(int capacity)
+        {
+            if (ArtLibrary.Find("box_frame") != null)
+                return null;
+
+            if (!Glosses.TryGetValue(capacity, out var sprite) || sprite == null)
+                Glosses[capacity] = sprite = BuildGloss(capacity);
+            return sprite;
+        }
+
+        private static Sprite BuildGloss(int capacity)
+        {
+            int w = Mathf.RoundToInt(BoxWidth * FramePixelsPerUnit);
+            int h = Mathf.RoundToInt(BoxHeight(capacity) * FramePixelsPerUnit);
+            var pixels = new Color32[w * h];
+
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    float u = (x + 0.5f) / w, v = (y + 0.5f) / h;
+
+                    // soft ends: the streaks fade in and out along the box
+                    float along = Smooth(0.06f, 0.2f, v) * (1f - Smooth(0.78f, 0.94f, v));
+                    float left = (1f - Smooth(0.012f, 0.03f, Mathf.Abs(u - 0.2f))) * 0.22f;
+                    float right = (1f - Smooth(0.008f, 0.02f, Mathf.Abs(u - 0.83f))) * 0.14f;
+                    float alpha = (left + right) * along;
+
+                    pixels[y * w + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(alpha) * 255f));
+                }
+            }
+
+            return ToSprite(pixels, w, h, new Vector2(0.5f, 0f), FramePixelsPerUnit);
         }
 
         public static Sprite Package(int capacity)
@@ -123,9 +161,18 @@ namespace SweetBazaar.Game
                     if (depth > 6f && PatternMask(type, u, v, x, y))
                         color = Color.Lerp(color, patternColor, 0.92f);
 
-                    // soft gloss in the upper left
+                    // roundness: a bright rim light along the top, a darker belly along the bottom
+                    float edge = 1f - Smooth(0f, 11f, depth);
+                    if (v > 0.55f)
+                        color = Color.Lerp(color, Color.white, 0.30f * edge);
+                    else
+                        color = Shade(color, 1f - 0.22f * edge);
+
+                    // glossy highlight in the upper left, and a small hard spark inside it
                     float gx = (u - 0.30f) / 0.30f, gy = (v - 0.78f) / 0.13f;
-                    color = Color.Lerp(color, Color.white, 0.38f * Mathf.Clamp01(1f - (gx * gx + gy * gy)));
+                    color = Color.Lerp(color, Color.white, 0.50f * Mathf.Clamp01(1f - (gx * gx + gy * gy)));
+                    float sx = (u - 0.22f) / 0.07f, sy = (v - 0.80f) / 0.07f;
+                    color = Color.Lerp(color, Color.white, 0.85f * Mathf.Clamp01(1.4f - (sx * sx + sy * sy)));
 
                     color = Color.Lerp(outline, color, Smooth(2.5f, 5f, depth));
                     color.a = coverage;
@@ -206,13 +253,21 @@ namespace SweetBazaar.Game
                     float grain = 0.03f * Mathf.Sin((x * 0.21f) + Hash(x / 9, 0, 7) * 6f);
                     Color color = Shade(Color.Lerp(woodDark, woodLight, v), 1f + grain);
 
-                    // the recessed inside of the box
+                    // a bright lip along the top edge and a thick dark foot at the bottom make the box look solid
+                    float lipLight = (1f - Smooth(4f, 12f, depth)) * Smooth(0.7f, 0.95f, v);
+                    color = Color.Lerp(color, Hex(0xF3D5A2), 0.55f * lipLight);
+                    if (y < 16)
+                        color = Shade(color, 0.72f + 0.28f * Smooth(0f, 16f, y));
+
+                    // the recessed inside of the box: shadow under the top rim, lighter further down
                     float inside = RoundedBox(x + 0.5f, y + 0.5f, w, h, 16f, 14f, out float insideDepth);
                     if (inside > 0f)
                     {
-                        Color inner = Shade(Color.Lerp(well, Shade(well, 1.12f), v), 1f);
+                        Color inner = Color.Lerp(Shade(well, 1.1f), Shade(well, 0.78f), Smooth(0.78f, 1f, v));
                         color = Color.Lerp(color, inner, inside);
-                        color = Color.Lerp(Shade(well, 0.7f), color, Smooth(0f, 4f, insideDepth));
+                        float sideShadow = 1f - Smooth(0f, 14f, insideDepth);
+                        color = Shade(color, 1f - 0.22f * sideShadow);
+                        color = Color.Lerp(Shade(well, 0.55f), color, Smooth(0f, 4f, insideDepth));
                     }
 
                     color = Color.Lerp(border, color, Smooth(4f, 8f, depth));

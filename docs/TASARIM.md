@@ -223,10 +223,14 @@ Karar ve davranışlar bu türün (su/top sıralama oyunları) yaygın uygulamal
   bölümler eklendikçe uzar).
   **Test kolaylığı:** Unity'de "Game" nesnesini seçip Inspector'daki *Debug Start Level* kutusuna bir sayı yazınca oyun o bölümden
   başlar ve kayıtlı ilerlemeye/dile dokunmaz; menü *Sweet Bazaar > Reset Saved Level* kayıtlı bölümü unutturur (sonraki başlangıç bölüm 1).
-- **Görsel:** Henüz yer tutucu; lokumlar, kutu ve paket kodla çizilir. Her çeşit hem renkle hem desenle ayırt edilir
+- **Görsel (yer tutucu, 2026-10-04 "3 boyutlu his" turu):** Kullanıcı geri bildirimi: düz renkli arayüz amatör görünüyordu. Kodla çizilen
+  yer tutucular şimdi: kalın/parlak "oyuncak" düğmeler (alt dudak, üst ışık çizgisi, basınca yazı çöker), ahşap çerçeveli kart,
+  ahşap bölüm tabelası, koyu altın hapı, **Lilita One** yazı tipi (`Resources/Fonts`, SIL Open Font License, Türkçe karakterli),
+  koyu kenarlı beyaz yazı, degrade + oryantal kafes desenli + köşeleri koyu arka plan (`BackgroundArt`), her kutu sırasının altında
+  ahşap **raf**, kutu/raf gölgeleri, kutuların cam gibi yansıması, daha hacimli lokumlar. Her çeşit hem renkle hem desenle ayırt edilir
   (nokta, parça, benek, tohum, çapraz çizgi, yatay çizgi, halka, artı, dama, baklava) — renk körü oyuncular için.
-  Gerçek görseller gelince yalnızca `CandyArt` değişir. **Ses yok** (ses dosyaları gerekir; sonraki adım).
-- **Sahne:** `Assets/_Game/Scenes/Main.unity` (kamera + `GameBootstrap`); Play'e basınca oyun kendiliğinden kurulur.
+  Bu hâli de geçicidir: profesyonel görünüm için yapay zekâ/ressam çizimleri `Resources/Art/` ile gelecek (`bg_game` zaten bağlı;
+  düğme/kart çizimleri için 9 parçalı kesim ayarı gerekir, çizimler gelince bağlanacak). **Ses yok** (sonraki adım).- **Sahne:** `Assets/_Game/Scenes/Main.unity` (kamera + `GameBootstrap`); Play'e basınca oyun kendiliğinden kurulur.
   Sahneyi yeniden üretmek: menü *Sweet Bazaar > Create Main Scene*.
 - **Kontrol aracı:** `tools\preview.ps1` oyun ekranını birkaç durumda PNG'ye çizer (bölümler, seçim, paketlenmiş kutular,
   kazanma, takılma, Türkçe); oynamadan görünüm denetimi için.

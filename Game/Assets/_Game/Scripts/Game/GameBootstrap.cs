@@ -54,6 +54,8 @@ namespace SweetBazaar.Game
             var localizer = LoadLocalizer();
             var pack = LoadLevelPack();
 
+            BackgroundArt.Create(transform, camera);
+
             var boardObject = new GameObject("Board");
             boardObject.transform.SetParent(transform, false);
             var boardView = boardObject.AddComponent<BoardView>();

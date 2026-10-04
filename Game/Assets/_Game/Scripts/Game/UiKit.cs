@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SweetBazaar.Game
@@ -12,13 +13,20 @@ namespace SweetBazaar.Game
         public static readonly Color CardColor = new Color32(0xFF, 0xF7, 0xE6, 255);
         public static readonly Color GoldColor = new Color32(0xF2, 0xB9, 0x3B, 255);
 
-        private static Font _font;
+        public static readonly Color OutlineColor = new Color32(0x4A, 0x26, 0x0E, 255);
 
+        private static Font _font;
+        private static bool _fontIsRounded;
+
+        // The game font (Resources/Fonts/LilitaOne-Regular.ttf, SIL Open Font License); the built-in font if it is missing.
         public static Font UiFont()
         {
             if (_font == null)
             {
-                _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                _font = Resources.Load<Font>("Fonts/LilitaOne-Regular");
+                _fontIsRounded = _font != null;
+                if (_font == null)
+                    _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
                 if (_font == null)
                     _font = Font.CreateDynamicFontFromOSFont("Arial", 32);
             }
@@ -58,7 +66,8 @@ namespace SweetBazaar.Game
             var text = rect.gameObject.AddComponent<Text>();
             text.font = UiFont();
             text.fontSize = size;
-            text.fontStyle = style;
+            // the game font is already heavy; a synthetic bold on top would only smear it
+            text.fontStyle = _fontIsRounded && style == FontStyle.Bold ? FontStyle.Normal : style;
             text.alignment = alignment;
             text.color = color ?? TextColor;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -99,22 +108,25 @@ namespace SweetBazaar.Game
             return image;
         }
 
+        // A framed cream card (the sprite carries its own colours).
         public static Image NewCard(string name, Transform parent, Vector2 anchor, Vector2 position, Vector2 size, Vector2? pivot = null)
         {
             var rect = NewRect(name, parent);
             Place(rect, anchor, pivot ?? anchor, position, size);
             var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = UiArt.RoundedRect();
+            image.sprite = UiArt.Card();
             image.type = Image.Type.Sliced;
-            image.color = CardColor;
+            image.color = Color.white;
             return image;
         }
 
+        // A chunky button. Buttons in the main colour get white text with a dark outline; buttons with a given (lighter)
+        // colour keep dark text.
         public static Button NewButton(string name, Transform parent, out Text label, int fontSize, Color? color = null)
         {
             var rect = NewRect(name, parent);
             var image = rect.gameObject.AddComponent<Image>();
-            image.sprite = UiArt.RoundedRect();
+            image.sprite = UiArt.Button();
             image.type = Image.Type.Sliced;
             image.color = color ?? ButtonColor;
 
@@ -123,19 +135,59 @@ namespace SweetBazaar.Game
             var colors = button.colors;
             colors.normalColor = Color.white;
             colors.highlightedColor = Color.white;
-            colors.pressedColor = new Color(0.82f, 0.82f, 0.82f, 1f);
+            colors.pressedColor = new Color(0.86f, 0.86f, 0.86f, 1f);
             colors.selectedColor = Color.white;
-            colors.disabledColor = new Color(0.6f, 0.6f, 0.6f, 0.75f);
+            colors.disabledColor = new Color(0.62f, 0.62f, 0.62f, 0.8f);
             button.colors = colors;
 
-            label = NewText("Label", rect, fontSize, FontStyle.Bold, TextAnchor.MiddleCenter);
+            bool primary = !color.HasValue;
+            label = NewText("Label", rect, fontSize, FontStyle.Bold, TextAnchor.MiddleCenter, primary ? Color.white : TextColor);
             Stretch(label.rectTransform);
-            label.rectTransform.offsetMin = new Vector2(12, 8);
-            label.rectTransform.offsetMax = new Vector2(-12, -8);
+            label.rectTransform.offsetMin = new Vector2(12, UiArt.ButtonLip + 6);
+            label.rectTransform.offsetMax = new Vector2(-12, -6);
             label.resizeTextForBestFit = true;
             label.resizeTextMinSize = 18;
             label.resizeTextMaxSize = fontSize;
+            if (primary)
+                AddOutline(label);
+
+            rect.gameObject.AddComponent<PressEffect>().Label = label.rectTransform;
             return button;
+        }
+
+        // A dark outline around the text, for white text on a coloured background.
+        public static void AddOutline(Text text, float distance = 3f)
+        {
+            var outline = text.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(OutlineColor.r, OutlineColor.g, OutlineColor.b, 0.95f);
+            outline.effectDistance = new Vector2(distance, -distance);
+        }
+
+        // A wooden plate (a chunky button that cannot be pressed), e.g. behind the level number.
+        public static Image NewPlate(string name, Transform parent, Vector2 anchor, Vector2 position, Vector2 size, Color color)
+        {
+            var rect = NewRect(name, parent);
+            Place(rect, anchor, anchor, position, size);
+            var image = rect.gameObject.AddComponent<Image>();
+            image.sprite = UiArt.Button();
+            image.type = Image.Type.Sliced;
+            image.color = color;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        // A dark capsule, e.g. behind the gold counter.
+        public static Image NewPill(string name, Transform parent, Vector2 anchor, Vector2 position, Vector2 size, Color color)
+        {
+            var rect = NewRect(name, parent);
+            Place(rect, anchor, anchor, position, size);
+            var image = rect.gameObject.AddComponent<Image>();
+            image.sprite = UiArt.RoundedRect();
+            image.type = Image.Type.Sliced;
+            image.pixelsPerUnitMultiplier = 24f / (size.y * 0.5f);
+            image.color = color;
+            image.raycastTarget = false;
+            return image;
         }
 
         // A small round counter in the top-right corner of a button (e.g. how many undos are left).
@@ -186,5 +238,44 @@ namespace SweetBazaar.Game
     // Runs coroutines for UI that is not a MonoBehaviour itself (the HUD and the pictures are plain classes).
     internal sealed class UiHost : MonoBehaviour
     {
+    }
+
+    // Pressing a chunky button pushes its label down a little, like a real key.
+    internal sealed class PressEffect : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
+    {
+        private const float Sink = 7f;
+
+        public RectTransform Label { get; set; }
+
+        private Vector2 _min, _max;
+        private bool _pressed;
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (_pressed || Label == null)
+                return;
+
+            _min = Label.offsetMin;
+            _max = Label.offsetMax;
+            Label.offsetMin = new Vector2(_min.x, _min.y - Sink);
+            Label.offsetMax = new Vector2(_max.x, _max.y - Sink);
+            _pressed = true;
+        }
+
+        public void OnPointerUp(PointerEventData eventData) => Release();
+
+        public void OnPointerExit(PointerEventData eventData) => Release();
+
+        private void OnDisable() => Release();
+
+        private void Release()
+        {
+            if (!_pressed || Label == null)
+                return;
+
+            Label.offsetMin = _min;
+            Label.offsetMax = _max;
+            _pressed = false;
+        }
     }
 }
