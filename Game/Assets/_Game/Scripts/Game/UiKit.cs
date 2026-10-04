@@ -208,6 +208,19 @@ namespace SweetBazaar.Game
             return text;
         }
 
+        // Red badge = uses left; gold badge with dark text = the price in gold of one more use.
+        public static void SetBadgeStyle(Text count, bool price)
+        {
+            var disc = count.transform.parent;
+            var red = Hex(0xC7352F);
+            var gold = Hex(0xF2B93B);
+            disc.GetComponent<Image>().color = price ? Hex(0xB9811A) : red;
+            var inner = disc.Find("Inner");
+            if (inner != null)
+                inner.GetComponent<Image>().color = price ? gold : red;
+            count.color = price ? TextColor : Color.white;
+        }
+
         // A gold coin: a disc with an inner ring.
         public static RectTransform NewCoin(string name, Transform parent, float size)
         {

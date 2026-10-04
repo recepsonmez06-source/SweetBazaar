@@ -173,6 +173,10 @@ namespace SweetBazaar.Game
                 return;
 
             bool takesBackABox = _session.NextUndoIsAddedBox;
+
+            // out of free undos: buy one with gold
+            if (!takesBackABox && !_allowance.CanUndo && !BuyHelp(ShopRules.UndoPrice, undos: 1, extraBoxes: 0))
+                return;
             if (!takesBackABox && !_allowance.TryUseUndo())
                 return;
 
@@ -191,13 +195,31 @@ namespace SweetBazaar.Game
 
         public void AddExtraBox()
         {
-            if (_busy || _hud.ModalVisible || !_allowance.TryUseExtraBox())
+            if (_busy || _hud.ModalVisible)
+                return;
+
+            // out of free extra boxes: buy one with gold
+            if (!_allowance.CanAddExtraBox && !BuyHelp(ShopRules.ExtraBoxPrice, undos: 0, extraBoxes: 1))
+                return;
+            if (!_allowance.TryUseExtraBox())
                 return;
 
             Deselect();
             _hud.HideStuck();
             _session.AddEmptyBox();
             StartCoroutine(PlayAddBox());
+        }
+
+        // Pays gold for one more help of this level; false (nothing changes) if the gold is not enough.
+        private bool BuyHelp(int price, int undos, int extraBoxes)
+        {
+            if (!_shop.TrySpend(price))
+                return false;
+
+            _allowance.Grant(undos, extraBoxes);
+            SaveShop();
+            _hud.SetGold(_shop.Gold);
+            return true;
         }
 
         // ---- the candy shop ----
@@ -227,6 +249,7 @@ namespace SweetBazaar.Game
 
             SaveShop();
             _hud.SetGold(_shop.Gold);
+            RefreshHud();
             _hud.ShowShop(_shop, justBuilt: !alreadyBuilt);
         }
 
@@ -386,12 +409,16 @@ namespace SweetBazaar.Game
         private void RefreshHud()
         {
             _hud.SetMoves(_moves);
-            _hud.SetRights(_allowance.UndosLeft, _allowance.ExtraBoxesLeft, _allowance.IsUnlimited);
+            // with no free uses left, the badge offers a use for gold (if the player has enough)
+            bool canBuyUndo = _shop.Gold >= ShopRules.UndoPrice;
+            bool canBuyBox = _shop.Gold >= ShopRules.ExtraBoxPrice;
+            _hud.SetRights(_allowance.UndosLeft, _allowance.ExtraBoxesLeft, _allowance.IsUnlimited,
+                canBuyUndo ? ShopRules.UndoPrice : 0, canBuyBox ? ShopRules.ExtraBoxPrice : 0);
 
             // taking back an added box is free, so the button stays usable then even without undos left
-            bool undoPossible = _session.CanUndo && (_allowance.CanUndo || _session.NextUndoIsAddedBox);
+            bool undoPossible = _session.CanUndo && (_allowance.CanUndo || _session.NextUndoIsAddedBox || canBuyUndo);
             _hud.SetUndoInteractable(!_busy && undoPossible);
-            _hud.SetAddBoxInteractable(!_busy && _allowance.CanAddExtraBox);
+            _hud.SetAddBoxInteractable(!_busy && (_allowance.CanAddExtraBox || canBuyBox));
         }
 
         private void FitCamera()

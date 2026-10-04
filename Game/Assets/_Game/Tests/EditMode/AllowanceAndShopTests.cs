@@ -317,8 +317,58 @@ namespace SweetBazaar.Core.Tests
                     levelsNeeded = record.Number;
             }
 
-            Assert.Greater(levelsNeeded, 60, "the last place should not come too early");
+            Assert.Greater(levelsNeeded, 120, "the shop must stay a goal for a long time (it was finished by level 110 once)");
             Assert.LessOrEqual(levelsNeeded, pack.Count, "the last place must be reachable within the shipped levels");
+        }
+
+        [Test]
+        public void ThePacing_EachPurchaseTakesLongerThanThePreviousOne()
+        {
+            var pack = LevelPackJson.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(
+                UnityEngine.Application.dataPath, "_Game", "Resources", "Levels", "levels.json")));
+
+            int gold = 0, purchase = 1, previousLevel = 0, previousGap = 0, cost = ShopCatalog.CostOfPurchase(1);
+            foreach (var record in pack.Levels)
+            {
+                gold += ShopRules.GoldForLevel(record.Definition.CountCandyTypes(), withoutHelp: false);
+                if (gold < cost)
+                    continue;
+
+                int gap = record.Number - previousLevel;
+                Assert.GreaterOrEqual(gap, previousGap, $"purchase {purchase} should not come sooner after the last one than the one before did");
+                previousGap = gap;
+                previousLevel = record.Number;
+                gold -= cost;
+
+                purchase++;
+                if (purchase > ShopCatalog.PurchaseCount)
+                    break;
+                cost = ShopCatalog.CostOfPurchase(purchase);
+            }
+            Assert.Greater(purchase, ShopCatalog.PurchaseCount, "every purchase must be reachable");
+        }
+
+        [Test]
+        public void SpendingGold_TakesItOrChangesNothing()
+        {
+            var shop = new Shop(gold: 20);
+
+            Assert.IsFalse(shop.TrySpend(21));
+            Assert.AreEqual(20, shop.Gold);
+
+            Assert.IsTrue(shop.TrySpend(ShopRules.UndoPrice));
+            Assert.AreEqual(20 - ShopRules.UndoPrice, shop.Gold);
+            Assert.Throws<ArgumentOutOfRangeException>(() => shop.TrySpend(-1));
+        }
+
+        [Test]
+        public void ExtraHelpsCostLessThanAWonLevelPays_ButNotNothing()
+        {
+            int perLevel = ShopRules.GoldForLevel(5, withoutHelp: false);
+            Assert.Greater(ShopRules.UndoPrice, 0);
+            Assert.Less(ShopRules.UndoPrice, perLevel);
+            Assert.Greater(ShopRules.ExtraBoxPrice, ShopRules.UndoPrice);
+            Assert.LessOrEqual(ShopRules.ExtraBoxPrice, perLevel * 2);
         }
 
         [Test]

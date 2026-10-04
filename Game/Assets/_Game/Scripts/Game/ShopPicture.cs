@@ -47,13 +47,14 @@ namespace SweetBazaar.Game
             int facade = styles[(int)ShopPlace.Facade];
             bool hasFacade = facade != Shop.NotBuilt;
 
-            // back to front: facade, counter, display, sign, tea corner, decoration
+            // back to front: facade, decoration (bunting, lanterns, pots), counter, display, sign, tea corner;
+            // the sign is drawn over the bunting so its text stays readable
             Place(root, ShopPlace.Facade, facade, Facade);
+            Place(root, ShopPlace.Decor, styles[(int)ShopPlace.Decor], (r, style) => Decor(r, style, hasFacade));
             Place(root, ShopPlace.Counter, styles[(int)ShopPlace.Counter], (r, style) => Counter(r, style));
             Place(root, ShopPlace.Display, styles[(int)ShopPlace.Display], (r, style) => Display(r, style));
             Place(root, ShopPlace.Sign, styles[(int)ShopPlace.Sign], (r, style) => Sign(r, style, raised: hasFacade));
             Place(root, ShopPlace.TeaCorner, styles[(int)ShopPlace.TeaCorner], TeaCorner);
-            Place(root, ShopPlace.Decor, styles[(int)ShopPlace.Decor], (r, style) => Decor(r, style, hasFacade));
         }
 
         private delegate void DrawStyle(RectTransform root, int style);

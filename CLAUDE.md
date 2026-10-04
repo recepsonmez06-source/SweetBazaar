@@ -155,6 +155,12 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
   ilk 5 bölümde sınırsız hak/rozet yok. Gerçek çizimler `Game/Assets/_Game/Resources/Art/` klasörüne PNG olarak konur
   (`docs/GORSEL_ISTEK.md`: ad listesi, boyut, yapay zekâ ile üretim yönergesi); yoksa kodla çizilen yer tutucu görünür.
   EditMode 189 + PlayMode 36 test geçti. **Bekleniyor:** kullanıcı yapay zekâ ile görselleri üretecek; dükkân akışı geri bildirimi.
+- [x] **Görsel yenileme + ekonomi (2026-10-04):** arayüz kalın/parlak düğmeler, ahşap kart/tabela, raf ve gölgeler, desenli arka plan,
+  Lilita One yazı tipi (`Resources/Fonts`); dükkân fiyatları gelire göre yeniden ayarlandı (alımlar ~4/11/31/70/150. bölümde) ve
+  altınla ekstra hak satın alma eklendi (Geri al 12, Ekstra kutu 30). EditMode 192 + PlayMode 38 test geçti.
+  **Görsel yolu kararı (kullanıcı):** hazır GUI paketi (Unity Asset Store, ücretli, kullanıcı satın alacak) + lokum/kutu/arka plan için
+  yapay zekâ. **Bekleniyor:** kullanıcı paketi seçip satın alır ve Unity'ye aktarır; sonra paketin düğme/çerçeve çizimlerini `UiKit`/`UiArt`
+  yerine bağlarız (9 parçalı kesim). Kodla çizilen arayüz yer tutucudur.
 - [ ] Sıradaki: ses efektleri/müzik, ayarlar menüsü (dil seçimi), reklam (AdMob test kimlikleriyle), reklam kaldırma satın
   alımı, kayıt/ilerleme iyileştirmeleri, gerçek görseller, Android'de telefonda deneme (APK)
 - [ ] İlk oynanabilir ekran

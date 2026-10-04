@@ -328,12 +328,21 @@ namespace SweetBazaar.Game
 
         // How many undos / extra boxes are left in this level. The counters are hidden when the helps are unlimited
         // (tutorial levels), so beginners do not have to count them.
-        public void SetRights(int undosLeft, int extraBoxesLeft, bool unlimited)
+        // When a help has no free uses left but the player can pay for one, its badge shows that price (gold coloured)
+        // instead of 0: undoPrice / extraBoxPrice are 0 when nothing can be bought.
+        public void SetRights(int undosLeft, int extraBoxesLeft, bool unlimited, int undoPrice = 0, int extraBoxPrice = 0)
         {
-            _undoBadge.text = undosLeft.ToString();
-            _addBoxBadge.text = extraBoxesLeft.ToString();
+            ShowBadge(_undoBadge, undosLeft, undoPrice);
+            ShowBadge(_addBoxBadge, extraBoxesLeft, extraBoxPrice);
             _undoBadge.rectTransform.parent.gameObject.SetActive(!unlimited);
             _addBoxBadge.rectTransform.parent.gameObject.SetActive(!unlimited);
+        }
+
+        private static void ShowBadge(Text badge, int left, int price)
+        {
+            bool offerPrice = left <= 0 && price > 0;
+            badge.text = (offerPrice ? price : left).ToString();
+            UiKit.SetBadgeStyle(badge, offerPrice);
         }
 
         public void SetUndoInteractable(bool value) => _undoButton.interactable = value;

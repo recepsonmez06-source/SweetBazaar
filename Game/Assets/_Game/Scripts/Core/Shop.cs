@@ -22,8 +22,11 @@ namespace SweetBazaar.Core
 
         // Gold for the 1st, 2nd ... purchase of a new place. The price depends on HOW MANY places are built already,
         // not on which one the player picks, so there is no "best order" to get wrong.
-        // Paced so the first purchase comes after about 4 levels and the last after about 110.
-        private static readonly int[] PurchaseCosts = { 60, 150, 350, 800, 1800 };
+        // Paced against the gold the shipped levels pay (about 14 gold per level at the start, 24-30 later; see
+        // ShopRules.GoldForLevel): purchases come after roughly levels 4, 11, 31, 70 and 150, so the shop keeps giving the
+        // player something to save for far into the game. Gold is also spent on extra helps (ShopRules.UndoPrice ...),
+        // so it never loses its use once the shop is complete.
+        private static readonly int[] PurchaseCosts = { 50, 160, 420, 1000, 2200 };
 
         // The counter is there from the start; every other place has to be bought.
         public static ShopPlace StartingPlace => ShopPlace.Counter;
@@ -104,6 +107,18 @@ namespace SweetBazaar.Core
             Gold += amount;
         }
 
+        // Pays gold for something else (an extra help). False (nothing changes) if there is not enough gold.
+        public bool TrySpend(int amount)
+        {
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount));
+            if (Gold < amount)
+                return false;
+
+            Gold -= amount;
+            return true;
+        }
+
         // Builds a new place in the chosen style and pays for it. False (nothing changes) if the place is already built,
         // the style does not exist or there is not enough gold.
         public bool TryBuild(ShopPlace place, int style)
@@ -156,6 +171,11 @@ namespace SweetBazaar.Core
         public const int BaseGold = 10;
         public const int GoldPerCandyType = 2;
         public const int CleanSolveBonus = 5;
+
+        // Gold for one extra help when the level's free ones have run out: about half a level's pay for an undo,
+        // a bit more than one level's pay for an extra box.
+        public const int UndoPrice = 12;
+        public const int ExtraBoxPrice = 30;
 
         // Gold for finishing a level: more for harder levels (more candy types) and a bonus for a clean solve,
         // i.e. without using undo or the extra box.

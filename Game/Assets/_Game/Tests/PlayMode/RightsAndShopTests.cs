@@ -108,6 +108,57 @@ namespace SweetBazaar.Game.PlayTests
         }
 
         [UnityTest]
+        public IEnumerator WhenTheFreeUndosRunOut_OneCanBeBoughtWithGold()
+        {
+            var controller = StartGame(6);
+            yield return null;
+            var move = Solution(controller)[0];
+            for (int i = 0; i < Allowance.DefaultUndos; i++)
+                controller.Allowance.TryUseUndo();
+            Assert.AreEqual(0, controller.Allowance.UndosLeft);
+
+            // too poor: nothing happens
+            yield return PlayMove(controller, move);
+            controller.Undo();
+            yield return WaitUntilIdle(controller);
+            Assert.AreEqual(1, controller.MovesMade, "without gold the move stays");
+
+            // with gold the badge offers the price and the undo works
+            controller.Shop.AddGold(ShopRules.UndoPrice + 3);
+            yield return PlayMove(controller, Solution(controller)[0]);
+            Assert.AreEqual(ShopRules.UndoPrice.ToString(), controller.Hud.UndoBadgeText, "the badge shows the price");
+            Assert.IsTrue(controller.Hud.UndoInteractable);
+
+            controller.Undo();
+            yield return WaitUntilIdle(controller);
+
+            Assert.AreEqual(1, controller.MovesMade, "the second move was taken back");
+            Assert.AreEqual(3, controller.Shop.Gold, "the undo cost its price");
+            Assert.AreEqual("0", controller.Hud.UndoBadgeText, "3 gold is not enough for another one");
+        }
+
+        [UnityTest]
+        public IEnumerator WhenTheFreeExtraBoxIsUsed_AnotherCanBeBoughtWithGold()
+        {
+            var controller = StartGame(6);
+            yield return null;
+            int boxes = controller.Session.Board.Boxes.Count;
+
+            controller.AddExtraBox();
+            yield return WaitUntilIdle(controller);
+            controller.AddExtraBox();
+            yield return WaitUntilIdle(controller);
+            Assert.AreEqual(boxes + 1, controller.Session.Board.Boxes.Count, "no gold, no second box");
+
+            controller.Shop.AddGold(ShopRules.ExtraBoxPrice);
+            controller.AddExtraBox();
+            yield return WaitUntilIdle(controller);
+
+            Assert.AreEqual(boxes + 2, controller.Session.Board.Boxes.Count);
+            Assert.AreEqual(0, controller.Shop.Gold);
+        }
+
+        [UnityTest]
         public IEnumerator UndoingAnExtraBoxIsFreeAndGivesTheBoxBack()
         {
             var controller = StartGame(6);

@@ -44,6 +44,8 @@ namespace SweetBazaar.EditorTools
             new Shot { Name = "shop-full-1", Level = 3, Setup = c => c.Hud.ShowShop(new Shop(2000, new[] { 1, 1, 1, 1, 1, 1 })) },
             new Shot { Name = "shop-full-2", Level = 3, Setup = c => c.Hud.ShowShop(new Shop(2000, new[] { 2, 2, 2, 2, 2, 2 })) },
             new Shot { Name = "tutorial-no-counters", Level = 2 },
+            new Shot { Name = "help-prices", Level = 6, Setup = c => { c.Hud.SetGold(120); c.Hud.SetRights(0, 0, false, ShopRules.UndoPrice, ShopRules.ExtraBoxPrice); } },
+            new Shot { Name = "shop-bunting", Level = 3, Setup = c => c.Hud.ShowShop(new Shop(300, new[] { 0, -1, 1, -1, -1, 0 })) },
         };
 
         [MenuItem("Sweet Bazaar/Capture Preview Screenshots")]

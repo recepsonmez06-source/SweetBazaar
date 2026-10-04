@@ -122,7 +122,13 @@ Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
   (kullanıcı geri bildirimi: "dükkânı geliştir deyip otomatik geçiyorsa kötü, seçenek sunarak geliştirilmeli").
 - Dükkânın **6 alanı** var: Tezgâh, Vitrin, Tabela, Çay köşesi, Dış cephe, Süsler. Her alanın **3 tarzı** var
   (toplam 18 seçenek). Oyuncu önce alanı, sonra tarzı seçer; resim seçilen tarzı önizler, altın harcanmaz.
-- **Bedel kurulan alan sayısına göre** artar (hangi alan olduğuna göre değil): 60, 150, 350, 800, 1800 altın (tezgâh baştan kurulu).
+- **Bedel kurulan alan sayısına göre** artar (hangi alan olduğuna göre değil): 50, 160, 420, 1000, 2200 altın (tezgâh baştan kurulu).
+  **Ekonomi hesabı (2026-10-04):** bölüm geliri 10 + 2×çeşit (+5) ≈ başta 14, sonra 24–30 altın; 200 bölümde toplam ≈ 5000–6000.
+  Eski fiyatlar (toplam 3160) dükkânı ~115. bölümde bitiriyordu ve altın işe yaramaz hâle geliyordu. Yeni fiyatlarla alımlar yaklaşık
+  4., 11., 31., 70. ve 150. bölümde gelir (her alım öncekinden uzun sürer; bir test denetler).
+- **Altın hiçbir zaman işe yaramaz hâle gelmez:** serbest hakları biten oyuncu altınla ekstra hak satın alır (Geri al 12 altın, Ekstra kutu 30 altın;
+  rozet fiyatı altın renginde gösterir). Bu, ileride altın paketi satışı (gerçek parayla) ve ödüllü reklamla altın için de zemin hazırlar.
+  Dükkân içeriği veriyle tanımlı; yeni alan/tarz eklemek (mevsimlik süsler vb.) için görsel gerekir, görseller gelince genişletilecek.
   Kurulmuş bir alanın tarzını değiştirmek **ücretsizdir**.
 - Fikir (karar verilmedi): Dükkânda yaşayan, oyuncuya eşlik eden bir kedi maskot.
 ## 7. Para kazanma
@@ -211,7 +217,7 @@ Karar ve davranışlar bu türün (su/top sıralama oyunları) yaygın uygulamal
   düğmesiyle görünür (kazanma ekranından da "Dükkâna git"). Dükkân ekranı: üstte resim, altında altın ve kurulan alan sayısı,
   6 alan düğmesi (yeşil nokta = kurulu), seçilen alanın 3 tarz kartı, bilgi satırı ve tek eylem düğmesi
   ("Kur (N altın)", kuruluysa "Bu tarzı kullan"). Altın yetmezse düğme pasif ve eksik miktar yazılır. Bedel/kurallar: bölüm 6.
-  Tempo: tüm dükkân yaklaşık ilk 110 bölümde kurulur. Seçimler (`shop.gold`, `shop.styles`) cihazda saklanır. Mantık `Core/Shop.cs`.
+  Tempo: tüm dükkân yaklaşık ilk 150 bölümde kurulur (altın ekstra haklara da harcanırsa daha geç). Seçimler (`shop.gold`, `shop.styles`) cihazda saklanır. Mantık `Core/Shop.cs`.
 - **Görsel altyapısı (2026-10-04):** Gerçek çizimler kodu değiştirmeden eklenir: `Assets/_Game/Resources/Art/<ad>.png`
   varsa `ArtLibrary` onu kullanır, yoksa kodla çizilen yer tutucu kalır. Ad listesi, boyutlar ve yapay zekâ ile üretim
   yönergesi `docs/GORSEL_ISTEK.md` dosyasındadır (lokum `candy_NN`, `box_frame`, `box_parcel`, `coin`, `lokumcu_1/2`,
