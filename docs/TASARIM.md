@@ -78,14 +78,15 @@ Bölüm üretici (2026-10-01, `Scripts/Core`: `LevelGenerator`, `LevelCurve`, `D
   üstüne koy, kutu tamamla, boş kutuyu harcama, son hamleyi geri alma), ileriyi hesaplamayan sanal bir oyuncu; 100 kez
   oynar, **kazanma oranı** (%100 = çok kolay, %0 = çok zor) bölümün zorluğudur. Tamsayı hesabı ve sabit rastgele
   üreteçle her cihazda aynı sonucu verir; ölçülen değer levels.json'a (otWinRate) yazılır.
-- **Eğri** (tek yerde ayarlanır: `LevelCurve.cs`): Her bölüme **yalnızca düşen** bir hedef kazanma oranı verilir
-  (bölüm 1–10: %100; 20: %96; 30: %86; 45: %66; 65: %46; 90: %28; 120: %16; 160: %9; 200: %5,5; sonrası yavaşça %3).
-  Ayar (çeşit, boş kutu) merdivenden seçilir; üretici yalnızca **hedefe ±4 puan** yakın bölümleri kabul eder. Rastgele
-  bölümlerin ayar içi dağılımı çok geniş (ör. 8 çeşit/2 boş kutu: %10–%85), bu bant o dalgalanmayı keser. Rahatlatıcı
-  bölüm **yoktur**: hiçbir bölüm hedefi gereği öncekinden kolay değildir. Ayar merdiveni (ortalama bot kazanma oranı):
-  3 boş kutu, 2–4 çeşit (öğretici, %100) → 2 boş kutu: 4 çeşit %99,6, 5: %94, 6: %80, 7: %62, 8: %44, 9: %25, 10: %16 →
-  1 boş kutu: 6 çeşit %12, 7: %7, 8: %3,5, 9: %2,9, 10: %1,4. Boş kutular yalnızca azalır, aynı boş kutuyla çeşit yalnızca
-  artar. **Hiçbir bölüm 10'dan fazla lokum çeşidi kullanmaz** (görsel bütçesi; türün ortak uygulaması 8–12 renk).
+- **Eğri** (tek yerde ayarlanır: `LevelCurve.cs`): Her bölüme **yalnızca düşen** bir hedef kazanma oranı verilir:
+  bölüm 1–5: %100 (öğretici); **6'dan itibaren belirgin şekilde zorlaşır**: 6: %96; 10: %88; 15: %78; 20: %70; 30: %58;
+  45: %45; 65: %33; 90: %22; 120: %13; 160: %8; 200: %5; sonrası yavaşça %3 (2026-10-04'te kullanıcı isteğiyle öğretici
+  20'den 5 bölüme indirildi). Ayar (çeşit, boş kutu) merdivenden seçilir; üretici yalnızca **hedefe ±4 puan** yakın
+  bölümleri kabul eder. Rastgele bölümlerin ayar içi dağılımı çok geniş (ör. 8 çeşit/2 boş kutu: %10–%85), bu bant
+  o dalgalanmayı keser. Rahatlatıcı bölüm **yoktur**. Ayar merdiveni (ortalama bot kazanma oranı): 3 boş kutu, 2–4 çeşit
+  (öğretici, %100) → 2 boş kutu: 4 çeşit %99,6, 5: %94, 6: %80, 7: %62, 8: %44, 9: %25, 10: %16 → 1 boş kutu: 6 çeşit
+  %12, 7: %7, 8: %3,5, 9: %2,9, 10: %1,4. Boş kutular yalnızca azalır, aynı boş kutuyla çeşit yalnızca artar.
+  **Hiçbir bölüm 10'dan fazla lokum çeşidi kullanmaz** (görsel bütçesi; türün ortak uygulaması 8–12 renk).
 - **1 boş kutulu bölümler:** Rastgele dağıtılan tahtaların yalnızca küçük bir kısmı çözülebilir (6 çeşitte ~1/8,
   10 çeşitte ~1/135), ama çözümsüzler çözücüyle milisaniyede elendiği için çok aday denenir (8000'e kadar). Geriye
   doğru karıştırma (çözülmüş durumdan ters hamlelerle) denendi ve **işe yaramadı**: kurallar sıkı olduğu için ~10
@@ -102,16 +103,16 @@ Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
   önce veya bilerek kullanılır. Unity içinden: menü *Sweet Bazaar > Build Level Pack*.
 - **Doğrulama:** Testler dosyayı okur, her bölümü geçerlilik açısından denetler, örnek bölümleri çözücüyle yeniden çözer.
   Tam doğrulama (hepsini çözme, ~3 dk): `tools\run-tests.ps1 -Filter AllLevels_AreSolvable`.
-- **Durum (2026-10-03, hedef zorluklu eğri):** 200 bölüm yeniden üretildi; hepsinin çözülebildiği, kayıtlı en kısa hamle
-  sayısının ve bot kazanma oranının doğru olduğu, başlangıçta paketlenmiş kutu olmadığı doğrulandı. Ölçülen bot kazanma
-  oranı (10 bölümlük pencere ortalaması; pencere içi en düşük–en yüksek): 1–10: %100; 21–30: %91 (87–96); 41–50: %66 (59–72);
-  61–70: %47 (41–53); 81–90: %31 (27–34); 101–110: %21 (17–26); 121–130: %16 (13–19); 141–150: %10 (7–16);
-  161–170: %8 (5–11); 191–200: %3,7 (2–6). 1 boş kutulu bölümler ~131. bölümden başlıyor (6–7 çeşit).
+- **Durum (2026-10-04):** 200 bölüm yeniden üretildi; hepsinin çözülebildiği, kayıtlı en kısa hamle sayısının ve bot
+  kazanma oranının doğru olduğu, başlangıçta paketlenmiş kutu olmadığı doğrulandı. Ölçülen bot kazanma oranı (10 bölümlük
+  pencere ortalaması): 1–10: %97; 11–20: %76; 21–30: %64; 31–40: %53; 41–50: %46; 61–70: %33; 81–90: %24; 101–110: %16;
+  121–130: %11; 141–150: %8; 191–200: %3,6. Çeşit sayısı: 1–5: 2–4; 6–10: 5; 11–20: 6–7; 21–60: 7–8; 81–100: 9;
+  101–110: 10. 1 boş kutulu bölümler ~115. bölümden başlıyor (6–7 çeşit).
 - **Bilinen sınırlar:** (1) Bot bir insan değildir; "bot kazanma oranı" insan zorluğunun bir göstergesi, kesin ölçüsü
-  değil — kullanıcı geri bildirimiyle ayarlanacak. (2) ~130. bölümden sonra çeşit sayısı 10'dan 6–7'ye düşer (zorluk
+  değil — kullanıcı geri bildirimiyle ayarlanacak. (2) ~115. bölümden sonra çeşit sayısı 10'dan 6–7'ye düşer (zorluk
   boş kutu azlığından gelir) ve en kısa çözüm ~31'den ~20 hamleye iner; oyuncuya "geriye gidiyor" gibi gelebilir.
   (3) Bot %0'ın altına inemez; 200. bölümden sonra zorluk ayırt edilemez, daha ileri zorluk yeni mekaniklerden
-  (kapalı/kilitli kutu, bu belgenin 5. bölümü) gelmeli. (4) İlk ~20 bölümde bot neredeyse hep kazanır (bilerek kolay).
+  (kapalı/kilitli kutu, bu belgenin 5. bölümü) gelmeli. (4) İlk 5 bölümde bot hep kazanır (öğretici, bilerek kolay).
 - **Ölçüm aracı:** `tools\CoreBench` (`dotnet run`) oyun mantığını Unity olmadan derler ve paralel çalışır:
   `build-levels`, `verify-levels`, `difficulty` (zorluk grafiği), `cells` (ayar merdiveni), `curve`.
   Unity editörü açıkken de çalışır.
@@ -198,8 +199,22 @@ Karar ve davranışlar bu türün (su/top sıralama oyunları) yaygın uygulamal
 - **Arayüz:** Üstte bölüm ve hamle sayısı, sağ üstte dil düğmesi (geçilecek dilin kendi adını gösterir),
   altta Geri al / Ekstra kutu / Yeniden başla. Kazanınca "Sonraki bölüm" kartı; takılınca üstte uyarı şeridi
   (tahta görünür kalır).
-- **Geri al:** Sınırsız (şimdilik). **Ekstra kutu:** Bölüm başına 1 kez (şimdilik ücretsiz; ileride ödüllü reklam
-  karşılığı). Geri al, ekstra kutuyu da geri alır ve hakkı geri verir. Reklam bağlantısı sonraki adım.
+- **Haklar (her bölümde yenilenir, 2026-10-04):** **Geri al: 5**, **Ekstra kutu: 1**. Kalan sayı düğmelerin köşesinde kırmızı bir
+  rozetle görünür; hak bitince düğme pasifleşir. Eklenmiş ekstra kutuyu geri almak **ücretsizdir** (geri alma hakkı
+  harcamaz, ekstra kutu hakkını geri verir). "Yeniden başla" haklar baştan verir. Hak bitince ileride ödüllü reklam izleyerek
+  hak kazanılacak (`Allowance.Grant`; reklam bağlantısı sonraki adım). Çözücü/bot zorluk ölçümü hak kullanmaz.
+- **Dükkânın büyümesi (bölüm 6'nın ilk sürümü, 2026-10-04):** Bölüm bitince **altın** kazanılır:
+  `10 + 2 × lokum çeşidi (+5 bonus: geri al/ekstra kutu kullanmadan bitirilirse)`. Altın, ekranın sol üstünde sayaçla ve
+  **Dükkân** düğmesiyle görünür (kazanma ekranından da "Dükkâna git"). Altınla dükkân 6 aşamada büyür (bedel, altın):
+  0 Küçük tezgâh (başlangıç) → 1 Vitrin (60) → 2 Tabela (150) → 3 Çay köşesi (350) → 4 Çarşıda büyük dükkân (800) →
+  5 Tanınmış şekerci (1800). Tempo: ilk geliştirme ~4 bölümde, sonuncusu ~110. bölümde (bir test bunu denetler). Her aşama
+  öncekini korur ve yenisini ekler (tezgâh → camlı vitrin → "Sweet Bazaar" tabelası → çay masası → cepheli büyük dükkân →
+  altın tabela, taç, bayraklar, fenerler, sıra bekleyen müşteriler). Aşama ve altın cihazda saklanır. Dükkân ekranında
+  resim, aşama adı/açıklaması, altın, sıradaki aşama ve "Geliştir" düğmesi bulunur. Görseller yer tutucudur (kodla çizilir).
+- **Lokumcu (bölüm sonu animasyonu, 2026-10-04):** Bölüm kazanılınca kazanma kartında **lokumcu** aşağıdan zıplayarak
+  gelir, el sallar, "Aferin!" der; üstten lokumlar yağar ve kazanılan altın sayaçla yukarı sayılır. Yer tutucu çizgi film
+  karakteri (fes, bıyık, önlük; kodla çizilir) — gerçek çizim gelince yalnızca `Lokumcu.cs` değişir. Kedi maskot fikri
+  (bölüm 6) hâlâ karara bağlanmadı.
 - **İlerleme:** Bulunulan bölüm ve seçilen dil cihazda saklanır. Son bölümden sonra bölüm 1'e dönülür (yeni
   bölümler eklendikçe uzar).
   **Test kolaylığı:** Unity'de "Game" nesnesini seçip Inspector'daki *Debug Start Level* kutusuna bir sayı yazınca oyun o bölümden

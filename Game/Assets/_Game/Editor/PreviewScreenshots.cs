@@ -33,8 +33,14 @@ namespace SweetBazaar.EditorTools
             new Shot { Name = "level-150-tr", Level = 150, Language = "tr" },
             new Shot { Name = "selected", Level = 6, Setup = c => c.TapBox(0) },
             new Shot { Name = "packed", Level = 6, Setup = c => PlayAlmostToTheEnd(c, keepLast: 2) },
-            new Shot { Name = "win", Level = 6, Setup = c => { PlayAlmostToTheEnd(c, keepLast: 0); c.Hud.ShowWin(false); } },
+            new Shot { Name = "win", Level = 6, Setup = c => { PlayAlmostToTheEnd(c, keepLast: 0); c.Hud.ShowWin(false, 27); } },
+            new Shot { Name = "win-tr", Level = 6, Language = "tr", Setup = c => { PlayAlmostToTheEnd(c, keepLast: 0); c.Hud.ShowWin(false, 27); } },
             new Shot { Name = "stuck-tr", Level = 12, Language = "tr", Setup = c => c.Hud.ShowStuck() },
+            new Shot { Name = "shop-0", Level = 3, Setup = c => c.Hud.ShowShop(new Shop(gold: 40, stage: 0)) },
+            new Shot { Name = "shop-1-built", Level = 3, Setup = c => c.Hud.ShowShop(new Shop(gold: 12, stage: 1), justBuilt: true) },
+            new Shot { Name = "shop-3-tr", Level = 3, Language = "tr", Setup = c => c.Hud.ShowShop(new Shop(gold: 380, stage: 3)) },
+            new Shot { Name = "shop-4", Level = 3, Setup = c => c.Hud.ShowShop(new Shop(gold: 100, stage: 4)) },
+            new Shot { Name = "shop-5", Level = 3, Setup = c => c.Hud.ShowShop(new Shop(gold: 2000, stage: 5), justBuilt: true) },
         };
 
         [MenuItem("Sweet Bazaar/Capture Preview Screenshots")]

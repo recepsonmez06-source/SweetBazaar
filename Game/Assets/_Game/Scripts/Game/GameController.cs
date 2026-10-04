@@ -11,9 +11,6 @@ namespace SweetBazaar.Game
     // and decides when the level is won or the player is stuck. The rules themselves live in Core.
     public sealed class GameController : MonoBehaviour
     {
-        // The extra empty box is limited to once per level for now; later it becomes a rewarded-ad reward.
-        private const int ExtraBoxesPerLevel = 1;
-
         private LevelPack _pack;
         private Localizer _localizer;
         private BoardView _boardView;
@@ -25,13 +22,20 @@ namespace SweetBazaar.Game
         private int _selected = -1;
         private bool _busy;
         private int _moves;
-        private int _extraBoxesUsed;
+        private Allowance _allowance;
+        private Shop _shop;
         private int _screenWidth, _screenHeight;
         private Rect _safeArea;
 
         public int LevelNumber { get; private set; }
 
         public GameSession Session => _session;
+
+        // The helps (undos, extra boxes) left in the current level.
+        public Allowance Allowance => _allowance;
+
+        // The candy shop the player grows with gold from won levels.
+        public Shop Shop => _shop;
 
         public GameHud Hud => _hud;
 
@@ -49,12 +53,16 @@ namespace SweetBazaar.Game
             _hud = hud;
             _camera = camera;
             _persist = persist;
+            _shop = persist ? new Shop(GamePrefs.ShopGold, GamePrefs.ShopStage) : new Shop();
 
             _hud.UndoClicked += Undo;
             _hud.RestartClicked += Restart;
             _hud.AddBoxClicked += AddExtraBox;
             _hud.NextClicked += NextLevel;
             _hud.LanguageClicked += ToggleLanguage;
+            _hud.ShopClicked += OpenShop;
+            _hud.UpgradeClicked += UpgradeShop;
+            _hud.ShopClosed += CloseShop;
             _localizer.LanguageChanged += _hud.RefreshTexts;
         }
 
@@ -68,6 +76,9 @@ namespace SweetBazaar.Game
             _hud.AddBoxClicked -= AddExtraBox;
             _hud.NextClicked -= NextLevel;
             _hud.LanguageClicked -= ToggleLanguage;
+            _hud.ShopClicked -= OpenShop;
+            _hud.UpgradeClicked -= UpgradeShop;
+            _hud.ShopClosed -= CloseShop;
             _localizer.LanguageChanged -= _hud.RefreshTexts;
         }
 
@@ -87,11 +98,13 @@ namespace SweetBazaar.Game
             _session = new GameSession(Board.FromLevel(_pack.Get(number).Definition));
             _selected = -1;
             _moves = 0;
-            _extraBoxesUsed = 0;
+            _allowance = new Allowance();
 
             _hud.HideWin();
             _hud.HideStuck();
+            _hud.HideShop();
             _hud.SetLevel(number);
+            _hud.SetGold(_shop.Gold);
             _boardView.Show(_session.Board);
             RefreshHud();
             FitCamera();
@@ -115,7 +128,7 @@ namespace SweetBazaar.Game
         // A tap on a box (or -1 for empty space). Real input and tests both come through here.
         public void TapBox(int index)
         {
-            if (_busy || _hud.WinVisible)
+            if (_busy || _hud.ModalVisible)
                 return;
 
             if (index < 0)
@@ -153,29 +166,72 @@ namespace SweetBazaar.Game
                 _boardView.ShakeBox(index);
         }
 
+        // Takes back the last move (costs one undo) or the last added extra box (gives the extra box back, free).
         public void Undo()
         {
-            if (_busy || _hud.WinVisible || !_session.TryUndo(out var info))
+            if (_busy || _hud.ModalVisible || !_session.CanUndo)
                 return;
+
+            bool takesBackABox = _session.NextUndoIsAddedBox;
+            if (!takesBackABox && !_allowance.TryUseUndo())
+                return;
+
+            if (!_session.TryUndo(out var info))
+                return;
+            if (takesBackABox)
+                _allowance.GiveExtraBoxBack();
 
             Deselect();
             _hud.HideStuck();
             StartCoroutine(PlayUndo(info));
         }
 
-        // Allowed at any time, even mid-animation: LoadLevel drops whatever is playing.
+        // Allowed at any time, even mid-animation: LoadLevel drops whatever is playing and gives a fresh allowance.
         public void Restart() => LoadLevel(LevelNumber);
 
         public void AddExtraBox()
         {
-            if (_busy || _hud.WinVisible || _extraBoxesUsed >= ExtraBoxesPerLevel)
+            if (_busy || _hud.ModalVisible || !_allowance.TryUseExtraBox())
                 return;
 
             Deselect();
             _hud.HideStuck();
             _session.AddEmptyBox();
-            _extraBoxesUsed++;
             StartCoroutine(PlayAddBox());
+        }
+
+        // ---- the candy shop ----
+
+        public void OpenShop()
+        {
+            if (_busy || _hud.ShopVisible)
+                return;
+
+            Deselect();
+            _hud.ShowShop(_shop);
+        }
+
+        public void CloseShop() => _hud.HideShop();
+
+        // Builds the next shop stage if there is enough gold.
+        public void UpgradeShop()
+        {
+            if (!_hud.ShopVisible || !_shop.TryUpgrade())
+                return;
+
+            SaveShop();
+            _hud.SetGold(_shop.Gold);
+            _hud.ShowShop(_shop, justBuilt: true);
+        }
+
+        private void SaveShop()
+        {
+            if (!_persist)
+                return;
+
+            GamePrefs.ShopGold = _shop.Gold;
+            GamePrefs.ShopStage = _shop.Stage;
+            GamePrefs.SaveNow();
         }
 
         public void NextLevel()
@@ -273,8 +329,6 @@ namespace SweetBazaar.Game
             _busy = true;
             if (!info.WasAddedBox)
                 _moves = Mathf.Max(0, _moves - 1);
-            else
-                _extraBoxesUsed = Mathf.Max(0, _extraBoxesUsed - 1);
             RefreshHud();
 
             if (info.WasAddedBox)
@@ -307,7 +361,14 @@ namespace SweetBazaar.Game
                 bool last = next > _pack.Count;
                 if (_persist)
                     GamePrefs.CurrentLevel = last ? 1 : next;
-                _hud.ShowWin(last);
+
+                // gold for the level: more for harder levels, a bonus for a clean solve (no undo / extra box)
+                int types = _pack.Get(LevelNumber).Definition.CountCandyTypes();
+                int earned = ShopRules.GoldForLevel(types, withoutHelp: !_allowance.AnyHelpUsed);
+                _shop.AddGold(earned);
+                SaveShop();
+                _hud.SetGold(_shop.Gold);
+                _hud.ShowWin(last, earned);
             }
             else if (_session.Board.IsStuck)
             {
@@ -319,8 +380,12 @@ namespace SweetBazaar.Game
         private void RefreshHud()
         {
             _hud.SetMoves(_moves);
-            _hud.SetUndoInteractable(!_busy && _session.CanUndo);
-            _hud.SetAddBoxInteractable(!_busy && _extraBoxesUsed < ExtraBoxesPerLevel);
+            _hud.SetRights(_allowance.UndosLeft, _allowance.ExtraBoxesLeft);
+
+            // taking back an added box is free, so the button stays usable then even without undos left
+            bool undoPossible = _session.CanUndo && (_allowance.CanUndo || _session.NextUndoIsAddedBox);
+            _hud.SetUndoInteractable(!_busy && undoPossible);
+            _hud.SetAddBoxInteractable(!_busy && _allowance.CanAddExtraBox);
         }
 
         private void FitCamera()

@@ -6,6 +6,39 @@ namespace SweetBazaar.Game
     internal static class UiArt
     {
         private static Sprite _roundedRect;
+        private static Sprite _circle;
+
+        // A plain white disc (tint it with Image.color); a flat ellipse is just a stretched disc.
+        public static Sprite Circle()
+        {
+            if (_circle != null)
+                return _circle;
+
+            const int size = 128;
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - size * 0.5f, dy = y + 0.5f - size * 0.5f;
+                    float distance = Mathf.Sqrt(dx * dx + dy * dy) - (size * 0.5f - 1f);
+                    byte alpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(0.5f - distance) * 255f);
+                    pixels[y * size + x] = new Color32(255, 255, 255, alpha);
+                }
+            }
+
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                name = "SweetBazaar circle",
+            };
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+
+            _circle = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            return _circle;
+        }
 
         // 9-sliced, so it stays crisp at any button size.
         public static Sprite RoundedRect()

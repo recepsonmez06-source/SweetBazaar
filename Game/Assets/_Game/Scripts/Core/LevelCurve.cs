@@ -14,7 +14,10 @@ namespace SweetBazaar.Core
         // Wanted CasualBot win rate (percent) at some level numbers; straight lines in between, flat after the last.
         private static readonly (int level, double winRate)[] TargetPoints =
         {
-            (1, 100), (10, 100), (20, 96), (30, 86), (45, 66), (65, 46), (90, 28), (120, 16), (160, 9), (200, 5.5), (400, 3),
+            (1, 100), (5, 100),                         // tutorial: 5 very easy levels
+            (6, 96), (10, 88), (15, 78), (20, 70),      // from level 6 it clearly gets harder
+            (30, 58), (45, 45), (65, 33), (90, 22),
+            (120, 13), (160, 8), (200, 5), (400, 3),
         };
 
         // Settings from easy to hard, with how hard random levels of that setting typically are: the mean CasualBot

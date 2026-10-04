@@ -40,7 +40,8 @@ namespace SweetBazaar.Core.Tests
         public void TheTargetFallsFromVeryEasyToVeryHard()
         {
             Assert.AreEqual(100, LevelCurve.TargetWinRate(1), 1e-9);
-            Assert.That(LevelCurve.TargetWinRate(60), Is.InRange(40.0, 60.0));
+            Assert.That(LevelCurve.TargetWinRate(60), Is.InRange(30.0, 50.0));
+            Assert.LessOrEqual(LevelCurve.TargetWinRate(10), 90.0, "the game must clearly get harder soon after the 5-level tutorial");
             Assert.LessOrEqual(LevelCurve.TargetWinRate(200), 8.0);
             Assert.Greater(LevelCurve.TargetWinRate(2000), 0.0);
         }

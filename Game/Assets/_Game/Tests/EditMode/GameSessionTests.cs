@@ -117,6 +117,22 @@ namespace SweetBazaar.Core.Tests
         }
 
         [Test]
+        public void NextUndoIsAddedBox_TellsWhatTheNextUndoWouldTakeBack()
+        {
+            var session = new GameSession(Cap4(new[] { 0, 1 }, None));
+            Assert.IsFalse(session.NextUndoIsAddedBox, "nothing to undo yet");
+
+            session.TryMove(0, 1, out _);
+            Assert.IsFalse(session.NextUndoIsAddedBox, "the last thing was a move");
+
+            session.AddEmptyBox();
+            Assert.IsTrue(session.NextUndoIsAddedBox, "the last thing was an added box");
+
+            session.Undo();
+            Assert.IsFalse(session.NextUndoIsAddedBox, "back to the move");
+        }
+
+        [Test]
         public void TryUndo_WithNothingToUndo_ReturnsFalse()
         {
             var session = new GameSession(Cap4(new[] { 0 }));

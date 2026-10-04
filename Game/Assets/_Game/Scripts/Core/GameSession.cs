@@ -49,6 +49,9 @@ namespace SweetBazaar.Core
 
         public bool CanUndo => _history.Count > 0;
 
+        // True if the next undo would take back an added extra box (instead of a move).
+        public bool NextUndoIsAddedBox => _history.Count > 0 && _history.Peek().AddedBox;
+
         // Makes the move if the rules allow it; returns false and changes nothing otherwise.
         public bool TryMove(int from, int to, out MoveOutcome outcome)
         {

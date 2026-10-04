@@ -137,11 +137,16 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] **Zorluk sistemi yeniden kuruldu (2026-10-03):** zorluk CasualBot kazanma oranıyla ölçülüyor; LevelCurve her bölüme
   düşen bir hedef veriyor, üretici hedefe ±4 puan yakın bölümleri kabul ediyor; rahatlatıcı bölüm yok. 200 bölüm yeniden
   üretildi, erify-levels ve Unity testleri (EditMode 160, PlayMode 19) geçti. Ayrıntı: TASARIM.md bölüm 5.
-- [ ] **Kullanıcı geri bildirimi bekleniyor:** Yeni bölümler (Unity'de Play, Main sahnesi; kayıtlı ilerleme varsa bölüm
-  numarasını başa almak için PlayerPrefs'i silmek gerekebilir) gerçekten giderek zorlaşıyor ve "çok basit" bölüm kalmadı mı?
-  Hangi bölümler çok kolay/zor geldi? Bot ayarı (CasualBot) ve hedef noktaları buna göre ayarlanır.
-- [ ] Açık: ~130. bölümden sonra çeşit sayısı 6–7'ye düşüyor (zorluk boş kutu azlığından); 200'den sonra zorluk ayırt
-  edilemiyor (yeni mekanik gerekir). Telefonda APK denemesi (bkz. Android APK notu).
+- [x] **Kullanıcı geri bildirimi (2026-10-04) işlendi:** (1) zorluk 5. bölümden sonra artıyor (hedef eğri güncellendi, 200 bölüm
+  yeniden üretildi, `verify-levels` OK); (2) **dükkân büyümesi** yapıldı (altın, Dükkân ekranı, 6 aşama: tezgâh → vitrin → tabela →
+  çay köşesi → büyük dükkân → tanınmış şekerci); (3) bölüm bitince animasyonlu **lokumcu** + altın sayacı; (4) **haklar**
+  (Geri al 5, Ekstra kutu 1, bölüm başına) düğmelerde rozetle görünüyor. Ayrıntı: TASARIM.md bölüm 5, 6 ve 13.
+  Testler: EditMode 179 geçti (+4 isteğe bağlı ölçüm testi atlandı), PlayMode 31 geçti.
+- [ ] **Kullanıcı geri bildirimi bekleniyor:** Yeni zorluk eğrisi, dükkân ve lokumcu nasıl? (Unity'de `Main` sahnesi; Game sekmesini
+  Simulator/dikey telefon yap; *Debug Start Level* ile istenen bölümden başla.) Yer tutucu görseller (lokumcu, dükkân) kodla
+  çiziliyor; gerçek çizim istenirse bir tasarımcı/asset paketi gerekir (karar kullanıcıya ait).
+- [ ] Açık: ~115. bölümden sonra çeşit sayısı 6–7'ye düşüyor (zorluk boş kutu azlığından); 200'den sonra zorluk ayırt
+  edilemiyor (yeni mekanik gerekir). Telefonda APK denemesi (bkz. Android APK notu). Ses yok.
 - [x] Çok dil altyapısı: `Localizer` + `Resources/Localization/{en,tr}.json`; metinler yalnızca `LocKeys` anahtarlarıyla
 - [x] Unity tarafı (E): tahta görünümü, dokunma girişi, animasyonlar, arayüz, ana sahne (`Scenes/Main.unity`);
   ilk oynanabilir sürüm. Yer tutucu (kodla çizilen) görseller; 15 PlayMode + 140 EditMode test geçiyor

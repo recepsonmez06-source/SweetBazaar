@@ -18,7 +18,24 @@ namespace SweetBazaar.Game
             }
         }
 
-        // Forgets the saved level (the next start is level 1). The chosen language stays.
+        private const string GoldKey = "shop.gold";
+        private const string ShopStageKey = "shop.stage";
+
+        public static int ShopGold
+        {
+            get => Mathf.Max(0, PlayerPrefs.GetInt(GoldKey, 0));
+            set => PlayerPrefs.SetInt(GoldKey, value);
+        }
+
+        public static int ShopStage
+        {
+            get => Mathf.Max(0, PlayerPrefs.GetInt(ShopStageKey, 0));
+            set => PlayerPrefs.SetInt(ShopStageKey, value);
+        }
+
+        public static void SaveNow() => PlayerPrefs.Save();
+
+        // Forgets the saved level (the next start is level 1). The chosen language and the shop stay.
         public static void ResetProgress()
         {
             PlayerPrefs.DeleteKey(LevelKey);

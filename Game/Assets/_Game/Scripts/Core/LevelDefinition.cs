@@ -10,6 +10,23 @@ namespace SweetBazaar.Core
         // One entry per box, candies listed bottom -> top; an empty array is an empty box.
         public List<int[]> Boxes { get; set; } = new List<int[]>();
 
+        // How many different candy types the level uses.
+        public int CountCandyTypes()
+        {
+            var types = new HashSet<int>();
+            if (Boxes != null)
+            {
+                foreach (var box in Boxes)
+                {
+                    if (box == null)
+                        continue;
+                    foreach (int candy in box)
+                        types.Add(candy);
+                }
+            }
+            return types.Count;
+        }
+
         // Returns the problems found; an empty list means the definition is valid.
         // Whether the level is actually solvable is the solver's job, not checked here.
         public IReadOnlyList<string> Validate()

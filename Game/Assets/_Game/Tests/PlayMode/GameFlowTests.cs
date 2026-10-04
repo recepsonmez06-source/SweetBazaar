@@ -258,7 +258,8 @@ namespace SweetBazaar.Game.PlayTests
         [UnityTest]
         public IEnumerator UndoTakesTheMoveBackAndReopensAClosedBox()
         {
-            var controller = StartGame(6);
+            // a short level: undoing every move up to the first packed box must stay within the 5 undos of a level
+            var controller = StartGame(1);
             yield return null;
             string start = controller.Session.Board.GetStateKey();
             var solution = Solution(controller);
