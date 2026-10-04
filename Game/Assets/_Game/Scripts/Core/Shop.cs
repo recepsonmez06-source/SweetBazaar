@@ -1,46 +1,100 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace SweetBazaar.Core
 {
-    // The candy shop the player grows with the gold earned from levels (docs/TASARIM.md section 6).
-    // Stage 0 is the starting little counter; each upgrade builds the next stage.
-    public static class ShopStages
+    // The places of the candy shop. Each place is built once and has several looks (styles) to choose from.
+    public enum ShopPlace
     {
-        // Gold needed to build each stage (index = stage). Stage 0 is free: it is where the shop starts.
-        // Paced so the first upgrade comes after about 3 levels and the last one after about 100.
-        private static readonly int[] Costs = { 0, 60, 150, 350, 800, 1800 };
+        Counter = 0,
+        Display = 1,
+        Sign = 2,
+        TeaCorner = 3,
+        Facade = 4,
+        Decor = 5,
+    }
 
-        public static int Count => Costs.Length;
+    public static class ShopCatalog
+    {
+        public const int PlaceCount = 6;
+        public const int StylesPerPlace = 3;
 
-        public static int CostOf(int stage)
+        // Gold for the 1st, 2nd ... purchase of a new place. The price depends on HOW MANY places are built already,
+        // not on which one the player picks, so there is no "best order" to get wrong.
+        // Paced so the first purchase comes after about 4 levels and the last after about 110.
+        private static readonly int[] PurchaseCosts = { 60, 150, 350, 800, 1800 };
+
+        // The counter is there from the start; every other place has to be bought.
+        public static ShopPlace StartingPlace => ShopPlace.Counter;
+
+        public static int PurchaseCount => PurchaseCosts.Length;
+
+        // purchaseNumber starts at 1.
+        public static int CostOfPurchase(int purchaseNumber)
         {
-            if (stage < 0 || stage >= Costs.Length)
-                throw new ArgumentOutOfRangeException(nameof(stage));
-            return Costs[stage];
+            if (purchaseNumber < 1 || purchaseNumber > PurchaseCosts.Length)
+                throw new ArgumentOutOfRangeException(nameof(purchaseNumber));
+            return PurchaseCosts[purchaseNumber - 1];
         }
     }
 
+    // The candy shop the player grows with the gold earned from levels (docs/TASARIM.md section 6).
+    // The player decides WHAT to build next and in WHICH style; nothing is built automatically.
     public sealed class Shop
     {
-        public Shop(int gold = 0, int stage = 0)
+        public const int NotBuilt = -1;
+
+        private readonly int[] _styles = new int[ShopCatalog.PlaceCount];
+
+        // styles: the saved style of each place (NotBuilt or 0 .. StylesPerPlace - 1); missing or invalid entries mean "not built".
+        public Shop(int gold = 0, IReadOnlyList<int> styles = null)
         {
             Gold = Math.Max(0, gold);
-            Stage = Math.Min(Math.Max(0, stage), ShopStages.Count - 1);
+
+            for (int i = 0; i < _styles.Length; i++)
+            {
+                int style = styles != null && i < styles.Count ? styles[i] : NotBuilt;
+                _styles[i] = style >= 0 && style < ShopCatalog.StylesPerPlace ? style : NotBuilt;
+            }
+
+            // the shop always starts with its counter
+            if (_styles[(int)ShopCatalog.StartingPlace] == NotBuilt)
+                _styles[(int)ShopCatalog.StartingPlace] = 0;
         }
 
         public int Gold { get; private set; }
 
-        // Index of the stage that is built right now (0 .. ShopStages.Count - 1).
-        public int Stage { get; private set; }
+        public int BuiltCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (int style in _styles)
+                {
+                    if (style != NotBuilt)
+                        count++;
+                }
+                return count;
+            }
+        }
 
-        public bool IsFullyBuilt => Stage >= ShopStages.Count - 1;
+        public bool IsFullyBuilt => BuiltCount >= ShopCatalog.PlaceCount;
 
-        // Gold the next stage costs (0 when everything is built).
-        public int NextCost => IsFullyBuilt ? 0 : ShopStages.CostOf(Stage + 1);
+        public bool IsBuilt(ShopPlace place) => _styles[(int)place] != NotBuilt;
 
-        public bool CanUpgrade => !IsFullyBuilt && Gold >= NextCost;
+        // The chosen style of a place, or NotBuilt.
+        public int StyleOf(ShopPlace place) => _styles[(int)place];
 
-        // Gold still missing for the next stage (0 if affordable or fully built).
+        // A copy of all styles (index = place), e.g. to draw the shop.
+        public int[] Styles => (int[])_styles.Clone();
+
+        // Gold the next new place costs (0 when everything is built).
+        public int NextCost => IsFullyBuilt ? 0 : ShopCatalog.CostOfPurchase(BuiltCount);
+
+        public bool CanBuild(ShopPlace place) => !IsBuilt(place) && !IsFullyBuilt && Gold >= NextCost;
+
+        // Gold still missing for the next new place (0 if affordable or fully built).
         public int GoldMissing => IsFullyBuilt ? 0 : Math.Max(0, NextCost - Gold);
 
         public void AddGold(int amount)
@@ -50,16 +104,51 @@ namespace SweetBazaar.Core
             Gold += amount;
         }
 
-        // Builds the next stage and pays for it; false (and nothing changes) if it is not affordable.
-        public bool TryUpgrade()
+        // Builds a new place in the chosen style and pays for it. False (nothing changes) if the place is already built,
+        // the style does not exist or there is not enough gold.
+        public bool TryBuild(ShopPlace place, int style)
         {
-            if (!CanUpgrade)
+            if (!IsValidStyle(style) || !CanBuild(place))
                 return false;
 
             Gold -= NextCost;
-            Stage++;
+            _styles[(int)place] = style;
             return true;
         }
+
+        // Changes the style of a place that is already built. Free, any time.
+        public bool TrySetStyle(ShopPlace place, int style)
+        {
+            if (!IsBuilt(place) || !IsValidStyle(style))
+                return false;
+
+            _styles[(int)place] = style;
+            return true;
+        }
+
+        // Saved form of the styles ("0,-1,2,-1,-1,-1").
+        public string SerializeStyles() => string.Join(",", _styles);
+
+        // Reads what SerializeStyles wrote; anything unreadable gives the starting shop.
+        public static int[] ParseStyles(string text)
+        {
+            var result = new int[ShopCatalog.PlaceCount];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = NotBuilt;
+
+            if (string.IsNullOrEmpty(text))
+                return result;
+
+            var parts = text.Split(',');
+            for (int i = 0; i < result.Length && i < parts.Length; i++)
+            {
+                if (int.TryParse(parts[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out int style))
+                    result[i] = style;
+            }
+            return result;
+        }
+
+        private static bool IsValidStyle(int style) => style >= 0 && style < ShopCatalog.StylesPerPlace;
     }
 
     public static class ShopRules

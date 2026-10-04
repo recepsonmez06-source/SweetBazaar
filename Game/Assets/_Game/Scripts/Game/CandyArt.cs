@@ -58,9 +58,16 @@ namespace SweetBazaar.Game
 
         public static Color BaseColor(int type) => BaseColors[Mathf.Abs(type) % TypeCount];
 
+        // Each of these returns the real artwork (Resources/Art/candy_00.png ... box_frame.png, box_parcel.png) when it
+        // exists, otherwise the code-drawn placeholder.
         public static Sprite Candy(int type)
         {
             type = Mathf.Abs(type) % TypeCount;
+
+            var art = ArtLibrary.Find("candy_" + type.ToString("00"));
+            if (art != null)
+                return art;
+
             if (!Candies.TryGetValue(type, out var sprite) || sprite == null)
                 Candies[type] = sprite = BuildCandy(type);
             return sprite;
@@ -68,6 +75,10 @@ namespace SweetBazaar.Game
 
         public static Sprite BoxFrame(int capacity)
         {
+            var art = ArtLibrary.Find("box_frame");
+            if (art != null)
+                return art;
+
             if (!Frames.TryGetValue(capacity, out var sprite) || sprite == null)
                 Frames[capacity] = sprite = BuildFrame(capacity);
             return sprite;
@@ -75,6 +86,10 @@ namespace SweetBazaar.Game
 
         public static Sprite Package(int capacity)
         {
+            var art = ArtLibrary.Find("box_parcel");
+            if (art != null)
+                return art;
+
             if (!Packages.TryGetValue(capacity, out var sprite) || sprite == null)
                 Packages[capacity] = sprite = BuildPackage(capacity);
             return sprite;

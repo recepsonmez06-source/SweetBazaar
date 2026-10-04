@@ -46,6 +46,7 @@ namespace SweetBazaar.Game
             view.Renderer = go.AddComponent<SpriteRenderer>();
             view.Renderer.sprite = CandyArt.Candy(type);
             view.Renderer.sortingOrder = SortingOrders.Candy;
+            ArtLibrary.FitInside(view.Renderer, CandyArt.CandyWidth, CandyArt.CandyHeight);
             return view;
         }
     }
@@ -59,6 +60,7 @@ namespace SweetBazaar.Game
         private SpriteRenderer _frame;
         private SpriteRenderer _parcel;
         private SpriteRenderer _parcelLabel;
+        private Vector3 _parcelRest = Vector3.one;     // the parcel's normal scale (not 1 when real artwork is used)
         private int _liftedCount;
 
         public int Capacity { get; private set; }
@@ -81,16 +83,29 @@ namespace SweetBazaar.Game
             view.Capacity = box.Capacity;
 
             view._frame = AddRenderer(go.transform, "Frame", CandyArt.BoxFrame(box.Capacity), SortingOrders.Frame);
+            ArtLibrary.FitBottomCenter(view._frame, CandyArt.BoxWidth, view.Height);
 
             view._parcel = AddRenderer(go.transform, "Parcel", CandyArt.Package(box.Capacity), SortingOrders.Parcel);
+            ArtLibrary.FitBottomCenter(view._parcel, CandyArt.BoxWidth, view.Height);
+            view._parcelRest = view._parcel.transform.localScale;
             view._parcel.gameObject.SetActive(false);
 
             view._parcelLabel = AddRenderer(view._parcel.transform, "Label", null, SortingOrders.ParcelLabel);
-            view._parcelLabel.transform.localPosition = new Vector3(0f, view.Height * 0.5f, 0f);
-            view._parcelLabel.transform.localScale = Vector3.one * 0.9f;
 
             view.Fill(box);
             return view;
+        }
+
+        // Puts the candy-type label in the middle of the parcel, whatever size the parcel artwork has.
+        private void PlaceLabel()
+        {
+            float parcelScale = _parcelRest.x;
+            Vector3 parcelPosition = _parcel.transform.localPosition;
+
+            _parcelLabel.transform.localPosition = new Vector3(
+                -parcelPosition.x / parcelScale, (Height * 0.5f - parcelPosition.y) / parcelScale, 0f);
+            _parcelLabel.transform.localScale =
+                Vector3.one * (ArtLibrary.FitScale(_parcelLabel.sprite, CandyArt.CandyWidth * 0.9f, CandyArt.CandyHeight * 0.9f) / parcelScale);
         }
 
         // Rebuilds the candies from the model, without animation.
@@ -164,11 +179,12 @@ namespace SweetBazaar.Game
             var type = _candies.Count > 0 ? _candies[0].Type : 0;
             _parcelLabel.sprite = CandyArt.Candy(type);
             _parcel.gameObject.SetActive(true);
-            _parcel.transform.localScale = Vector3.one;
+            _parcel.transform.localScale = _parcelRest;
+            PlaceLabel();
 
             if (animate && Application.isPlaying && isActiveAndEnabled)
             {
-                _parcel.transform.localScale = new Vector3(1f, 0f, 1f);
+                _parcel.transform.localScale = new Vector3(_parcelRest.x, 0f, _parcelRest.z);
                 StartCoroutine(PopIn());
             }
         }
@@ -188,15 +204,15 @@ namespace SweetBazaar.Game
 
         private IEnumerator PopIn()
         {
-            yield return Tween.ScaleTo(_parcel.transform, Vector3.one, 0.32f, Tween.EaseOutBack);
+            yield return Tween.ScaleTo(_parcel.transform, _parcelRest, 0.32f, Tween.EaseOutBack);
             yield return Pulse();
         }
 
         private IEnumerator PopOut()
         {
-            yield return Tween.ScaleTo(_parcel.transform, new Vector3(1f, 0f, 1f), 0.16f);
+            yield return Tween.ScaleTo(_parcel.transform, new Vector3(_parcelRest.x, 0f, _parcelRest.z), 0.16f);
             _parcel.gameObject.SetActive(false);
-            _parcel.transform.localScale = Vector3.one;
+            _parcel.transform.localScale = _parcelRest;
         }
 
         private IEnumerator Pulse()

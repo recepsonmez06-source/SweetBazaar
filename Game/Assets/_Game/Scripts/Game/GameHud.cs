@@ -60,15 +60,21 @@ namespace SweetBazaar.Game
         private readonly GameObject _shopPanel;
         private readonly Text _shopTitle;
         private readonly RectTransform _shopPicture;
-        private readonly Text _shopStageName;
-        private readonly Text _shopStageText;
         private readonly Text _shopGoldText;
+        private readonly Text _shopBuiltCount;
+        private readonly Text _shopHint;
         private readonly Text _shopInfo;
-        private readonly Button _upgradeButton;
-        private readonly Text _upgradeLabel;
+        private readonly Button[] _placeButtons = new Button[ShopCatalog.PlaceCount];
+        private readonly Text[] _placeLabels = new Text[ShopCatalog.PlaceCount];
+        private readonly Image[] _placeMarks = new Image[ShopCatalog.PlaceCount];
+        private readonly Image[] _placeBackgrounds = new Image[ShopCatalog.PlaceCount];
+        private readonly Button[] _styleButtons = new Button[ShopCatalog.StylesPerPlace];
+        private readonly Text[] _styleLabels = new Text[ShopCatalog.StylesPerPlace];
+        private readonly Image[] _styleBackgrounds = new Image[ShopCatalog.StylesPerPlace];
+        private readonly Button _shopActionButton;
+        private readonly Text _shopActionLabel;
         private readonly Button _closeShopButton;
         private readonly Text _closeShopLabel;
-        private readonly Image[] _stageDots = new Image[ShopStages.Count];
 
         private int _level = 1;
         private int _moves;
@@ -77,6 +83,8 @@ namespace SweetBazaar.Game
         private int _winGoldEarned;
         private int _winGoldShown;
         private Shop _shopShown;
+        private ShopPlace _selectedPlace = ShopPlace.Counter;
+        private int _previewStyle;
         private bool _justBuilt;
 
         public event Action UndoClicked;
@@ -85,8 +93,10 @@ namespace SweetBazaar.Game
         public event Action NextClicked;
         public event Action LanguageClicked;
         public event Action ShopClicked;
-        public event Action UpgradeClicked;
         public event Action ShopClosed;
+
+        // The player pressed "Build" or "Use this style" for the selected place and style.
+        public event Action<ShopPlace, int> ShopActionClicked;
 
         public bool WinVisible => _winPanel.activeSelf;
         public bool StuckVisible => _stuckPanel.activeSelf;
@@ -97,10 +107,16 @@ namespace SweetBazaar.Game
 
         public bool UndoInteractable => _undoButton.interactable;
         public bool AddBoxInteractable => _addBoxButton.interactable;
-        public bool UpgradeInteractable => _upgradeButton.gameObject.activeInHierarchy && _upgradeButton.interactable;
         public string UndoBadgeText => _undoBadge.text;
         public string AddBoxBadgeText => _addBoxBadge.text;
+        public bool RightsVisible => _undoBadge.rectTransform.parent.gameObject.activeSelf;
         public string GoldText => _goldText.text;
+
+        // What the shop screen currently offers (for tests).
+        public ShopPlace SelectedShopPlace => _selectedPlace;
+        public int PreviewedShopStyle => _previewStyle;
+        public bool ShopActionInteractable => _shopActionButton.gameObject.activeSelf && _shopActionButton.interactable;
+        public string ShopActionText => _shopActionLabel.text;
 
         public GameHud(Transform parent, Camera camera, Localizer localizer)
         {
@@ -129,6 +145,7 @@ namespace SweetBazaar.Game
             var topRight = new Vector2(1f, 1f);
             var topCenter = new Vector2(0.5f, 1f);
             var bottomCenter = new Vector2(0.5f, 0f);
+            var centerAnchor = new Vector2(0.5f, 0.5f);
 
             // ---- top bar ----
             _levelText = UiKit.NewText("Level", _safeArea, 68, FontStyle.Bold, TextAnchor.MiddleCenter);
@@ -138,7 +155,7 @@ namespace SweetBazaar.Game
             UiKit.Place(_movesText.rectTransform, topCenter, topCenter, new Vector2(0, -150), new Vector2(560, 60));
 
             var coin = UiKit.NewCoin("Coin", _safeArea, 64);
-            UiKit.Place(coin, topLeft, new Vector2(0.5f, 0.5f), new Vector2(60, -62), new Vector2(64, 64));
+            UiKit.Place(coin, topLeft, centerAnchor, new Vector2(60, -62), new Vector2(64, 64));
             _goldText = UiKit.NewText("Gold", _safeArea, 52, FontStyle.Bold, TextAnchor.MiddleLeft);
             UiKit.Place(_goldText.rectTransform, topLeft, new Vector2(0f, 0.5f), new Vector2(104, -62), new Vector2(190, 70));
             _goldText.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -174,7 +191,6 @@ namespace SweetBazaar.Game
             UiKit.Stretch((RectTransform)_winPanel.transform);
             _winPanel.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.6f);
 
-            var centerAnchor = new Vector2(0.5f, 0.5f);
             _winCard = UiKit.NewCard("Card", _winPanel.transform, centerAnchor, Vector2.zero, new Vector2(900, 1180)).rectTransform;
 
             _winTitle = UiKit.NewText("Title", _winCard, 66, FontStyle.Bold, TextAnchor.MiddleCenter);
@@ -201,49 +217,74 @@ namespace SweetBazaar.Game
             UiKit.Place((RectTransform)_winShopButton.transform, bottomCenter, bottomCenter, new Vector2(0, 60), new Vector2(580, 110));
             _winPanel.SetActive(false);
 
-            // ---- shop screen ----
+            // ---- shop screen: picture, places to pick, three styles to pick from, one action ----
             _shopPanel = UiKit.NewRect("Shop", _safeArea).gameObject;
             UiKit.Stretch((RectTransform)_shopPanel.transform);
             _shopPanel.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.65f);
 
-            var shopCard = UiKit.NewCard("Card", _shopPanel.transform, centerAnchor, Vector2.zero, new Vector2(960, 1560)).rectTransform;
-            _shopTitle = UiKit.NewText("Title", shopCard, 64, FontStyle.Bold, TextAnchor.MiddleCenter);
-            UiKit.Place(_shopTitle.rectTransform, topCenter, topCenter, new Vector2(0, -40), new Vector2(880, 96));
+            var shopCard = UiKit.NewCard("Card", _shopPanel.transform, centerAnchor, Vector2.zero, new Vector2(960, 1640)).rectTransform;
+            _shopTitle = UiKit.NewText("Title", shopCard, 60, FontStyle.Bold, TextAnchor.MiddleCenter);
+            UiKit.Place(_shopTitle.rectTransform, topCenter, topCenter, new Vector2(0, -30), new Vector2(880, 84));
 
             var frame = UiKit.Shape(shopCard, "PictureFrame", 0, 0, 900, 600, UiKit.Hex(0x7A4B24));
-            UiKit.Place(frame.rectTransform, topCenter, topCenter, new Vector2(0, -150), new Vector2(900, 600));
+            UiKit.Place(frame.rectTransform, topCenter, topCenter, new Vector2(0, -120), new Vector2(900, 600));
             var pictureHolder = UiKit.NewRect("Picture", shopCard);
-            UiKit.Place(pictureHolder, topCenter, topCenter, new Vector2(0, -160), new Vector2(880, 572));
+            UiKit.Place(pictureHolder, topCenter, topCenter, new Vector2(0, -134), new Vector2(880, 572));
             pictureHolder.gameObject.AddComponent<RectMask2D>();
             _shopPicture = UiKit.NewRect("Scene", pictureHolder);
-            UiKit.Place(_shopPicture, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(ShopPicture.Width, ShopPicture.Height));
+            UiKit.Place(_shopPicture, centerAnchor, centerAnchor, Vector2.zero, new Vector2(ShopPicture.Width, ShopPicture.Height));
             _shopPicture.localScale = Vector3.one * 1.1f;
 
-            _shopStageName = UiKit.NewText("StageName", shopCard, 56, FontStyle.Bold, TextAnchor.MiddleCenter);
-            UiKit.Place(_shopStageName.rectTransform, topCenter, topCenter, new Vector2(0, -770), new Vector2(880, 80));
-            _shopStageText = UiKit.NewText("StageText", shopCard, 36, FontStyle.Normal, TextAnchor.UpperCenter);
-            UiKit.Place(_shopStageText.rectTransform, topCenter, topCenter, new Vector2(0, -855), new Vector2(820, 110));
+            var shopCoin = UiKit.NewCoin("ShopCoin", shopCard, 52);
+            UiKit.Place(shopCoin, topLeft, centerAnchor, new Vector2(70, -775), new Vector2(52, 52));
+            _shopGoldText = UiKit.NewText("ShopGold", shopCard, 44, FontStyle.Bold, TextAnchor.MiddleLeft);
+            UiKit.Place(_shopGoldText.rectTransform, topLeft, new Vector2(0f, 0.5f), new Vector2(104, -775), new Vector2(380, 60));
+            _shopGoldText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            _shopBuiltCount = UiKit.NewText("BuiltCount", shopCard, 34, FontStyle.Normal, TextAnchor.MiddleRight);
+            UiKit.Place(_shopBuiltCount.rectTransform, topRight, new Vector2(1f, 0.5f), new Vector2(-50, -775), new Vector2(440, 60));
 
-            for (int i = 0; i < _stageDots.Length; i++)
+            // the six places
+            for (int i = 0; i < ShopCatalog.PlaceCount; i++)
             {
-                float x = (i - (_stageDots.Length - 1) * 0.5f) * 70f;
-                _stageDots[i] = UiKit.Shape(shopCard, "Dot" + i, 0, 0, 36, 36, UiKit.Hex(0xD9C3A0), round: true);
-                UiKit.Place(_stageDots[i].rectTransform, topCenter, centerAnchor, new Vector2(x, -990), new Vector2(36, 36));
+                int index = i;
+                var button = UiKit.NewButton("Place" + i, shopCard, out _placeLabels[i], 26, UiKit.SecondaryButtonColor);
+                float x = (i - (ShopCatalog.PlaceCount - 1) * 0.5f) * 150f;
+                UiKit.Place((RectTransform)button.transform, topCenter, topCenter, new Vector2(x, -830), new Vector2(142, 104));
+                _placeButtons[i] = button;
+                _placeBackgrounds[i] = button.GetComponent<Image>();
+                _placeLabels[i].verticalOverflow = VerticalWrapMode.Truncate;
+                _placeLabels[i].rectTransform.offsetMin = new Vector2(6, 6);
+                _placeLabels[i].rectTransform.offsetMax = new Vector2(-6, -6);
+
+                // a small disc in the corner: green when the place is built, grey when it still has to be built
+                _placeMarks[i] = UiKit.Shape(button.transform, "Mark", 0, 0, 30, 30, UiKit.Hex(0x4C9A3C), round: true);
+                UiKit.Place(_placeMarks[i].rectTransform, new Vector2(1f, 1f), centerAnchor, new Vector2(-10, -10), new Vector2(30, 30));
+
+                button.onClick.AddListener(() => SelectPlace((ShopPlace)index));
             }
 
-            var shopCoin = UiKit.NewCoin("ShopCoin", shopCard, 60);
-            UiKit.Place(shopCoin, topCenter, centerAnchor, new Vector2(-150, -1070), new Vector2(60, 60));
-            _shopGoldText = UiKit.NewText("ShopGold", shopCard, 50, FontStyle.Bold, TextAnchor.MiddleLeft);
-            UiKit.Place(_shopGoldText.rectTransform, topCenter, new Vector2(0f, 0.5f), new Vector2(-104, -1070), new Vector2(400, 70));
-            _shopGoldText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            _shopHint = UiKit.NewText("Hint", shopCard, 30, FontStyle.Italic, TextAnchor.MiddleCenter);
+            UiKit.Place(_shopHint.rectTransform, topCenter, topCenter, new Vector2(0, -945), new Vector2(880, 44));
 
-            _shopInfo = UiKit.NewText("Info", shopCard, 36, FontStyle.Normal, TextAnchor.UpperCenter);
-            UiKit.Place(_shopInfo.rectTransform, topCenter, topCenter, new Vector2(0, -1115), new Vector2(840, 100));
+            // the three styles of the selected place
+            for (int i = 0; i < ShopCatalog.StylesPerPlace; i++)
+            {
+                int index = i;
+                var button = UiKit.NewButton("Style" + i, shopCard, out _styleLabels[i], 36, UiKit.CardColor);
+                float x = (i - (ShopCatalog.StylesPerPlace - 1) * 0.5f) * 300f;
+                UiKit.Place((RectTransform)button.transform, topCenter, topCenter, new Vector2(x, -1000), new Vector2(280, 190));
+                _styleButtons[i] = button;
+                _styleBackgrounds[i] = button.GetComponent<Image>();
+                button.onClick.AddListener(() => SelectStyle(index));
+            }
 
-            _upgradeButton = UiKit.NewButton("Upgrade", shopCard, out _upgradeLabel, 50);
-            UiKit.Place((RectTransform)_upgradeButton.transform, bottomCenter, bottomCenter, new Vector2(0, 190), new Vector2(580, 130));
+            _shopInfo = UiKit.NewText("Info", shopCard, 32, FontStyle.Normal, TextAnchor.UpperCenter);
+            UiKit.Place(_shopInfo.rectTransform, topCenter, topCenter, new Vector2(0, -1210), new Vector2(860, 96));
+
+            _shopActionButton = UiKit.NewButton("Action", shopCard, out _shopActionLabel, 46);
+            UiKit.Place((RectTransform)_shopActionButton.transform, bottomCenter, bottomCenter, new Vector2(0, 200), new Vector2(620, 124));
             _closeShopButton = UiKit.NewButton("Close", shopCard, out _closeShopLabel, 40, UiKit.SecondaryButtonColor);
-            UiKit.Place((RectTransform)_closeShopButton.transform, bottomCenter, bottomCenter, new Vector2(0, 60), new Vector2(580, 110));
+            UiKit.Place((RectTransform)_closeShopButton.transform, bottomCenter, bottomCenter, new Vector2(0, 56), new Vector2(620, 104));
             _shopPanel.SetActive(false);
 
             _languageButton.onClick.AddListener(() => LanguageClicked?.Invoke());
@@ -253,7 +294,7 @@ namespace SweetBazaar.Game
             _nextButton.onClick.AddListener(() => NextClicked?.Invoke());
             _shopButton.onClick.AddListener(() => ShopClicked?.Invoke());
             _winShopButton.onClick.AddListener(() => ShopClicked?.Invoke());
-            _upgradeButton.onClick.AddListener(() => UpgradeClicked?.Invoke());
+            _shopActionButton.onClick.AddListener(() => ShopActionClicked?.Invoke(_selectedPlace, _previewStyle));
             _closeShopButton.onClick.AddListener(() => ShopClosed?.Invoke());
 
             ApplySafeArea();
@@ -280,11 +321,14 @@ namespace SweetBazaar.Game
             RefreshTexts();
         }
 
-        // How many undos / extra boxes are left in this level.
-        public void SetRights(int undosLeft, int extraBoxesLeft)
+        // How many undos / extra boxes are left in this level. The counters are hidden when the helps are unlimited
+        // (tutorial levels), so beginners do not have to count them.
+        public void SetRights(int undosLeft, int extraBoxesLeft, bool unlimited)
         {
             _undoBadge.text = undosLeft.ToString();
             _addBoxBadge.text = extraBoxesLeft.ToString();
+            _undoBadge.rectTransform.parent.gameObject.SetActive(!unlimited);
+            _addBoxBadge.rectTransform.parent.gameObject.SetActive(!unlimited);
         }
 
         public void SetUndoInteractable(bool value) => _undoButton.interactable = value;
@@ -319,14 +363,19 @@ namespace SweetBazaar.Game
 
         public void HideStuck() => _stuckPanel.SetActive(false);
 
-        // Opens the shop screen showing the given shop; justBuilt celebrates a fresh upgrade.
+        // Opens the shop screen for the given shop. The selected place is kept if the screen was open before;
+        // justBuilt celebrates a freshly built place.
         public void ShowShop(Shop shop, bool justBuilt = false)
         {
+            bool wasOpen = _shopPanel.activeSelf;
             _shopShown = shop;
             _justBuilt = justBuilt;
             _shopPanel.SetActive(true);
-            ShopPicture.Build(_shopPicture, shop.Stage);
-            RefreshTexts();
+
+            if (!wasOpen)
+                _selectedPlace = FirstUnbuiltPlaceOrCounter(shop);
+            _previewStyle = shop.IsBuilt(_selectedPlace) ? shop.StyleOf(_selectedPlace) : 0;
+            RefreshShop();
 
             if (justBuilt && Application.isPlaying)
             {
@@ -340,6 +389,29 @@ namespace SweetBazaar.Game
             _shopPanel.SetActive(false);
             _shopShown = null;
             _justBuilt = false;
+        }
+
+        // Picks a place to look at (what a tap on its button does).
+        public void SelectPlace(ShopPlace place)
+        {
+            if (_shopShown == null)
+                return;
+
+            _selectedPlace = place;
+            _previewStyle = _shopShown.IsBuilt(place) ? _shopShown.StyleOf(place) : 0;
+            _justBuilt = false;
+            RefreshShop();
+        }
+
+        // Previews a style for the selected place (what a tap on a style card does); nothing is paid or changed yet.
+        public void SelectStyle(int style)
+        {
+            if (_shopShown == null || style < 0 || style >= ShopCatalog.StylesPerPlace)
+                return;
+
+            _previewStyle = style;
+            _justBuilt = false;
+            RefreshShop();
         }
 
         public void RefreshTexts()
@@ -363,43 +435,68 @@ namespace SweetBazaar.Game
             _stuckTitle.text = _localizer.Get(LocKeys.StuckTitle);
             _stuckHint.text = _localizer.Get(LocKeys.StuckHint);
 
-            RefreshShopTexts();
+            RefreshShop();
         }
 
-        private void RefreshShopTexts()
+        // Redraws the shop screen from the shop, the selected place and the previewed style.
+        private void RefreshShop()
         {
             _shopTitle.text = _localizer.Get(LocKeys.ShopTitle);
             _closeShopLabel.text = _localizer.Get(LocKeys.ShopClose);
-            _upgradeLabel.text = _localizer.Get(LocKeys.ShopUpgrade);
+            _shopHint.text = _localizer.Get(LocKeys.ShopHint);
 
             var shop = _shopShown;
             if (shop == null)
                 return;
 
-            _shopStageName.text = _localizer.Get(LocKeys.ShopStageName(shop.Stage));
-            _shopStageText.text = _localizer.Get(LocKeys.ShopStageText(shop.Stage));
             _shopGoldText.text = _localizer.Format(LocKeys.ShopGold, shop.Gold);
+            _shopBuiltCount.text = _localizer.Format(LocKeys.ShopBuiltCount, shop.BuiltCount, ShopCatalog.PlaceCount);
 
-            for (int i = 0; i < _stageDots.Length; i++)
-                _stageDots[i].color = i <= shop.Stage ? UiKit.Hex(0xF2B93B) : UiKit.Hex(0xD9C3A0);
+            // the picture shows the shop as it is, with the previewed style on the selected place
+            var styles = shop.Styles;
+            styles[(int)_selectedPlace] = _previewStyle;
+            ShopPicture.Build(_shopPicture, styles);
 
-            if (shop.IsFullyBuilt)
+            for (int i = 0; i < ShopCatalog.PlaceCount; i++)
             {
-                _shopInfo.text = _localizer.Get(LocKeys.ShopMaxed);
-                _upgradeButton.gameObject.SetActive(false);
+                var place = (ShopPlace)i;
+                _placeLabels[i].text = _localizer.Get(LocKeys.ShopPlaceName(place));
+                _placeMarks[i].color = shop.IsBuilt(place) ? UiKit.Hex(0x4C9A3C) : UiKit.Hex(0xB8A98C);
+                _placeBackgrounds[i].color = place == _selectedPlace ? UiKit.ButtonColor : UiKit.SecondaryButtonColor;
+                _placeButtons[i].transform.localScale = place == _selectedPlace ? Vector3.one * 1.06f : Vector3.one;
+            }
+
+            bool built = shop.IsBuilt(_selectedPlace);
+            for (int i = 0; i < ShopCatalog.StylesPerPlace; i++)
+            {
+                _styleLabels[i].text = _localizer.Get(LocKeys.ShopStyleName(_selectedPlace, i));
+
+                bool previewed = i == _previewStyle;
+                _styleBackgrounds[i].color = previewed ? UiKit.ButtonColor : UiKit.CardColor;
+                _styleButtons[i].transform.localScale = previewed ? Vector3.one * 1.05f : Vector3.one;
+            }
+
+            // what the button does, and why it may not work yet
+            string info;
+            if (built)
+            {
+                bool same = _previewStyle == shop.StyleOf(_selectedPlace);
+                _shopActionLabel.text = _localizer.Get(same ? LocKeys.ShopCurrent : LocKeys.ShopUse);
+                _shopActionButton.interactable = !same;
+                info = _localizer.Get(LocKeys.ShopFreeChange);
             }
             else
             {
-                _upgradeButton.gameObject.SetActive(true);
-                _upgradeButton.interactable = shop.CanUpgrade;
-
-                string next = _localizer.Format(LocKeys.ShopNext, _localizer.Get(LocKeys.ShopStageName(shop.Stage + 1)), shop.NextCost);
-                string status = shop.CanUpgrade ? string.Empty : "\n" + _localizer.Format(LocKeys.ShopMissing, shop.GoldMissing);
-                _shopInfo.text = (_justBuilt ? _localizer.Get(LocKeys.ShopBuilt) + "\n" : string.Empty) + next + status;
+                _shopActionLabel.text = _localizer.Format(LocKeys.ShopBuild, shop.NextCost);
+                _shopActionButton.interactable = shop.CanBuild(_selectedPlace);
+                info = _localizer.Get(LocKeys.ShopNotBuilt);
+                if (!shop.CanBuild(_selectedPlace))
+                    info += "\n" + _localizer.Format(LocKeys.ShopMissing, shop.GoldMissing);
             }
 
-            if (shop.IsFullyBuilt && _justBuilt)
-                _shopInfo.text = _localizer.Get(LocKeys.ShopBuilt) + "\n" + _localizer.Get(LocKeys.ShopMaxed);
+            if (_justBuilt)
+                info = _localizer.Get(LocKeys.ShopJustBuilt) + "\n" + (shop.IsFullyBuilt ? _localizer.Get(LocKeys.ShopMaxed) : info);
+            _shopInfo.text = info;
         }
 
         // Keeps the HUD clear of notches and rounded corners.
@@ -418,7 +515,17 @@ namespace SweetBazaar.Game
             _safeArea.offsetMax = Vector2.zero;
         }
 
-        // ---- animations ----
+        // ---- helpers and animations ----
+
+        private static ShopPlace FirstUnbuiltPlaceOrCounter(Shop shop)
+        {
+            for (int i = 0; i < ShopCatalog.PlaceCount; i++)
+            {
+                if (!shop.IsBuilt((ShopPlace)i))
+                    return (ShopPlace)i;
+            }
+            return ShopPlace.Counter;
+        }
 
         private IEnumerator CountUpGold()
         {

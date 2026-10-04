@@ -14,6 +14,7 @@ namespace SweetBazaar.Core.Tests
             Assert.AreEqual(5, allowance.UndosLeft);
             Assert.AreEqual(1, allowance.ExtraBoxesLeft);
             Assert.IsFalse(allowance.AnyHelpUsed);
+            Assert.IsFalse(allowance.IsUnlimited);
         }
 
         [Test]
@@ -77,74 +78,201 @@ namespace SweetBazaar.Core.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new Allowance(0, -1));
             Assert.Throws<ArgumentOutOfRangeException>(() => new Allowance().Grant(-1, 0));
         }
+
+        [Test]
+        public void UnlimitedHelps_NeverRunOutButStillCountAsHelp()
+        {
+            var allowance = Allowance.Unlimited();
+
+            for (int i = 0; i < 50; i++)
+            {
+                Assert.IsTrue(allowance.TryUseUndo());
+                Assert.IsTrue(allowance.TryUseExtraBox());
+            }
+
+            Assert.IsTrue(allowance.IsUnlimited);
+            Assert.IsTrue(allowance.CanUndo);
+            Assert.IsTrue(allowance.CanAddExtraBox);
+            Assert.IsTrue(allowance.AnyHelpUsed);
+        }
+
+        [Test]
+        public void TheTutorialLevels_HaveUnlimitedHelps_TheOthersDoNot()
+        {
+            for (int level = 1; level <= LevelCurve.TutorialLevels; level++)
+                Assert.IsTrue(Allowance.ForLevel(level).IsUnlimited, $"level {level}");
+
+            Assert.IsFalse(Allowance.ForLevel(LevelCurve.TutorialLevels + 1).IsUnlimited);
+            Assert.AreEqual(Allowance.DefaultUndos, Allowance.ForLevel(50).UndosLeft);
+        }
     }
 
     public class ShopTests
     {
         [Test]
-        public void TheShopStartsAsALittleCounterWithoutGold()
+        public void TheShopStartsWithOnlyTheCounterAndNoGold()
         {
             var shop = new Shop();
 
             Assert.AreEqual(0, shop.Gold);
-            Assert.AreEqual(0, shop.Stage);
-            Assert.IsFalse(shop.IsFullyBuilt);
-            Assert.AreEqual(ShopStages.CostOf(1), shop.NextCost);
+            Assert.AreEqual(1, shop.BuiltCount);
+            Assert.IsTrue(shop.IsBuilt(ShopPlace.Counter));
+            Assert.AreEqual(0, shop.StyleOf(ShopPlace.Counter));
+            foreach (var place in new[] { ShopPlace.Display, ShopPlace.Sign, ShopPlace.TeaCorner, ShopPlace.Facade, ShopPlace.Decor })
+            {
+                Assert.IsFalse(shop.IsBuilt(place), place.ToString());
+                Assert.AreEqual(Shop.NotBuilt, shop.StyleOf(place));
+            }
         }
 
         [Test]
-        public void TheStagesGetMoreExpensive()
+        public void ThePurchasesGetMoreExpensive()
         {
-            for (int stage = 2; stage < ShopStages.Count; stage++)
-                Assert.Greater(ShopStages.CostOf(stage), ShopStages.CostOf(stage - 1), $"stage {stage}");
+            for (int n = 2; n <= ShopCatalog.PurchaseCount; n++)
+                Assert.Greater(ShopCatalog.CostOfPurchase(n), ShopCatalog.CostOfPurchase(n - 1), $"purchase {n}");
 
-            Assert.AreEqual(0, ShopStages.CostOf(0));
-            Assert.AreEqual(6, ShopStages.Count);
+            Assert.AreEqual(ShopCatalog.PlaceCount - 1, ShopCatalog.PurchaseCount, "every place but the counter is bought");
         }
 
         [Test]
-        public void ItCannotBeUpgradedWithoutEnoughGold()
+        public void APlaceIsBuiltInTheStyleThePlayerChooses_AndPaidFor()
         {
-            var shop = new Shop(gold: ShopStages.CostOf(1) - 1);
+            var shop = new Shop(gold: ShopCatalog.CostOfPurchase(1) + 7);
 
-            Assert.IsFalse(shop.CanUpgrade);
-            Assert.IsFalse(shop.TryUpgrade());
-            Assert.AreEqual(0, shop.Stage);
-            Assert.AreEqual(1, shop.GoldMissing);
-        }
+            Assert.IsTrue(shop.CanBuild(ShopPlace.Sign));
+            Assert.IsTrue(shop.TryBuild(ShopPlace.Sign, 2));
 
-        [Test]
-        public void UpgradingCostsGoldAndBuildsTheNextStage()
-        {
-            var shop = new Shop(gold: ShopStages.CostOf(1) + 7);
-
-            Assert.IsTrue(shop.TryUpgrade());
-
-            Assert.AreEqual(1, shop.Stage);
+            Assert.IsTrue(shop.IsBuilt(ShopPlace.Sign));
+            Assert.AreEqual(2, shop.StyleOf(ShopPlace.Sign));
             Assert.AreEqual(7, shop.Gold);
-            Assert.AreEqual(ShopStages.CostOf(2), shop.NextCost);
+            Assert.AreEqual(2, shop.BuiltCount);
         }
 
         [Test]
-        public void AfterTheLastStage_NothingMoreCanBeBought()
+        public void NothingIsBuiltAutomatically()
         {
-            var shop = new Shop(gold: 1000000, stage: ShopStages.Count - 1);
+            var shop = new Shop(gold: 100000);
+
+            // plenty of gold, but only what the player asks for gets built
+            Assert.AreEqual(1, shop.BuiltCount);
+            shop.TryBuild(ShopPlace.Decor, 1);
+            Assert.AreEqual(2, shop.BuiltCount);
+            Assert.IsFalse(shop.IsBuilt(ShopPlace.Sign));
+        }
+
+        [Test]
+        public void ThePlayerCanBuildInAnyOrder()
+        {
+            var shop = new Shop(gold: 100000);
+
+            Assert.IsTrue(shop.TryBuild(ShopPlace.Facade, 0));
+            Assert.IsTrue(shop.TryBuild(ShopPlace.TeaCorner, 1));
+            Assert.IsTrue(shop.TryBuild(ShopPlace.Display, 2));
+
+            Assert.AreEqual(4, shop.BuiltCount);
+        }
+
+        [Test]
+        public void ThePriceDependsOnHowManyPlacesAreBuilt_NotOnWhichOne()
+        {
+            var first = new Shop(gold: 100000);
+            var second = new Shop(gold: 100000);
+            int before = first.Gold;
+
+            first.TryBuild(ShopPlace.Facade, 0);
+            second.TryBuild(ShopPlace.Decor, 0);
+
+            Assert.AreEqual(before - first.Gold, 100000 - second.Gold);
+            Assert.AreEqual(ShopCatalog.CostOfPurchase(2), first.NextCost);
+        }
+
+        [Test]
+        public void WithoutEnoughGold_NothingIsBuilt()
+        {
+            var shop = new Shop(gold: ShopCatalog.CostOfPurchase(1) - 1);
+
+            Assert.IsFalse(shop.CanBuild(ShopPlace.Sign));
+            Assert.IsFalse(shop.TryBuild(ShopPlace.Sign, 0));
+            Assert.IsFalse(shop.IsBuilt(ShopPlace.Sign));
+            Assert.AreEqual(1, shop.GoldMissing);
+            Assert.AreEqual(ShopCatalog.CostOfPurchase(1) - 1, shop.Gold);
+        }
+
+        [Test]
+        public void APlaceCannotBeBuiltTwice_AndAnInvalidStyleIsRefused()
+        {
+            var shop = new Shop(gold: 100000);
+            shop.TryBuild(ShopPlace.Sign, 0);
+
+            Assert.IsFalse(shop.TryBuild(ShopPlace.Sign, 1), "already built");
+            Assert.IsFalse(shop.TryBuild(ShopPlace.Display, 3), "there are only 3 styles");
+            Assert.IsFalse(shop.TryBuild(ShopPlace.Display, -1));
+            Assert.AreEqual(0, shop.StyleOf(ShopPlace.Sign));
+        }
+
+        [Test]
+        public void TheStyleOfABuiltPlaceCanBeChangedForFree()
+        {
+            var shop = new Shop(gold: 100000);
+            shop.TryBuild(ShopPlace.Sign, 0);
+            int goldBefore = shop.Gold;
+
+            Assert.IsTrue(shop.TrySetStyle(ShopPlace.Sign, 2));
+            Assert.IsTrue(shop.TrySetStyle(ShopPlace.Counter, 1));
+
+            Assert.AreEqual(2, shop.StyleOf(ShopPlace.Sign));
+            Assert.AreEqual(1, shop.StyleOf(ShopPlace.Counter));
+            Assert.AreEqual(goldBefore, shop.Gold);
+        }
+
+        [Test]
+        public void AStyleCannotBeSetOnAPlaceThatIsNotBuilt()
+        {
+            var shop = new Shop(gold: 100000);
+
+            Assert.IsFalse(shop.TrySetStyle(ShopPlace.Decor, 1));
+            Assert.IsFalse(shop.IsBuilt(ShopPlace.Decor));
+        }
+
+        [Test]
+        public void WhenEverythingIsBuilt_NothingMoreCanBeBought()
+        {
+            var shop = new Shop(gold: 1000000);
+            foreach (ShopPlace place in Enum.GetValues(typeof(ShopPlace)))
+                shop.TryBuild(place, 0);
 
             Assert.IsTrue(shop.IsFullyBuilt);
-            Assert.IsFalse(shop.CanUpgrade);
-            Assert.IsFalse(shop.TryUpgrade());
             Assert.AreEqual(0, shop.NextCost);
-            Assert.AreEqual(1000000, shop.Gold);
+            Assert.IsFalse(shop.CanBuild(ShopPlace.Sign));
         }
 
         [Test]
-        public void SavedValuesOutsideTheRange_AreClamped()
+        public void SavedStyles_AreReadBack_AndGarbageGivesTheStartingShop()
         {
-            var shop = new Shop(gold: -5, stage: 99);
+            var shop = new Shop(gold: 100000);
+            shop.TryBuild(ShopPlace.TeaCorner, 2);
+            shop.TrySetStyle(ShopPlace.Counter, 1);
+
+            var restored = new Shop(shop.Gold, Shop.ParseStyles(shop.SerializeStyles()));
+
+            CollectionAssert.AreEqual(shop.Styles, restored.Styles);
+            Assert.AreEqual(1, new Shop(0, Shop.ParseStyles("nonsense")).BuiltCount);
+            Assert.AreEqual(1, new Shop(0, Shop.ParseStyles(null)).BuiltCount);
+            Assert.AreEqual(1, new Shop(0, Shop.ParseStyles("")).BuiltCount);
+        }
+
+        [Test]
+        public void ValuesOutsideTheRange_AreIgnored()
+        {
+            var shop = new Shop(gold: -5, styles: new[] { 7, -9, 2, 99, 1, 0 });
 
             Assert.AreEqual(0, shop.Gold);
-            Assert.AreEqual(ShopStages.Count - 1, shop.Stage);
-            Assert.AreEqual(0, new Shop(0, -3).Stage);
+            Assert.AreEqual(0, shop.StyleOf(ShopPlace.Counter), "the counter always exists");
+            Assert.IsFalse(shop.IsBuilt(ShopPlace.Display));
+            Assert.AreEqual(2, shop.StyleOf(ShopPlace.Sign));
+            Assert.IsFalse(shop.IsBuilt(ShopPlace.TeaCorner));
+            Assert.AreEqual(1, shop.StyleOf(ShopPlace.Facade));
+            Assert.AreEqual(0, shop.StyleOf(ShopPlace.Decor));
         }
 
         [Test]
@@ -161,12 +289,11 @@ namespace SweetBazaar.Core.Tests
         }
 
         [Test]
-        public void ThePacing_FirstUpgradeAfterAboutThreeEasyLevels()
+        public void ThePacing_FirstPurchaseAfterAboutThreeEasyLevels()
         {
-            // Easy early levels (2-3 candy types, clean solves) should buy the first upgrade within a handful of levels.
             int perLevel = ShopRules.GoldForLevel(3, withoutHelp: true);
 
-            int levels = (int)Math.Ceiling(ShopStages.CostOf(1) / (double)perLevel);
+            int levels = (int)Math.Ceiling(ShopCatalog.CostOfPurchase(1) / (double)perLevel);
 
             Assert.That(levels, Is.InRange(2, 5));
         }
@@ -174,29 +301,36 @@ namespace SweetBazaar.Core.Tests
         [Test]
         public void ThePacing_TheWholeShopCanBeBuiltWithinTheShippedLevels()
         {
-            // Over 200 levels with the gold the levels actually pay, the last stage must be reachable but not trivially.
             var pack = LevelPackJson.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(
                 UnityEngine.Application.dataPath, "_Game", "Resources", "Levels", "levels.json")));
+
+            int total = 0;
+            for (int n = 1; n <= ShopCatalog.PurchaseCount; n++)
+                total += ShopCatalog.CostOfPurchase(n);
 
             int gold = 0;
             int levelsNeeded = -1;
             foreach (var record in pack.Levels)
             {
                 gold += ShopRules.GoldForLevel(record.Definition.CountCandyTypes(), withoutHelp: false);
-                if (levelsNeeded < 0 && gold >= TotalCost())
+                if (levelsNeeded < 0 && gold >= total)
                     levelsNeeded = record.Number;
             }
 
-            Assert.Greater(levelsNeeded, 60, "the last stage should not come too early");
-            Assert.LessOrEqual(levelsNeeded, pack.Count, "the last stage must be reachable within the shipped levels");
+            Assert.Greater(levelsNeeded, 60, "the last place should not come too early");
+            Assert.LessOrEqual(levelsNeeded, pack.Count, "the last place must be reachable within the shipped levels");
         }
 
-        private static int TotalCost()
+        [Test]
+        public void EveryPlaceHasANameAndEveryStyleHasAName()
         {
-            int total = 0;
-            for (int stage = 1; stage < ShopStages.Count; stage++)
-                total += ShopStages.CostOf(stage);
-            return total;
+            foreach (ShopPlace place in Enum.GetValues(typeof(ShopPlace)))
+            {
+                Assert.IsNotEmpty(LocKeys.ShopPlaceName(place));
+                for (int style = 0; style < ShopCatalog.StylesPerPlace; style++)
+                    Assert.IsNotEmpty(LocKeys.ShopStyleName(place, style), $"{place} {style}");
+            }
+            Assert.AreEqual(ShopCatalog.PlaceCount, Enum.GetValues(typeof(ShopPlace)).Length);
         }
     }
 

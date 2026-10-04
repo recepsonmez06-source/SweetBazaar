@@ -29,6 +29,9 @@ namespace SweetBazaar.Core
             (6, 1, 12.1), (7, 1, 6.9), (8, 1, 3.5), (9, 1, 2.9), (10, 1, 1.4),
         };
 
+        // The first levels teach the game: 3 empty boxes, few candy types, and unlimited undo / extra boxes.
+        public const int TutorialLevels = 5;
+
         // Tutorial levels (target at or above this) use 3 empty boxes and 2..4 candy types.
         private const double TutorialTarget = 99.5;
         private const int TutorialEmptyBoxes = 3;

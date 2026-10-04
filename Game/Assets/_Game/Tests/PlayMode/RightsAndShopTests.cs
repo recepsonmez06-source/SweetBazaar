@@ -174,6 +174,31 @@ namespace SweetBazaar.Game.PlayTests
             Assert.AreEqual(ShopRules.GoldForLevel(CandyTypesOfLevel(1), withoutHelp: false), controller.Shop.Gold);
         }
 
+        // ---- tutorial levels have no counters ----
+
+        [UnityTest]
+        public IEnumerator TheTutorialLevelsHaveUnlimitedHelpsWithoutCounters()
+        {
+            var tutorial = StartGame(3);
+            yield return null;
+            Assert.IsFalse(tutorial.Hud.RightsVisible, "no counters in the tutorial");
+
+            var move = Solution(tutorial)[0];
+            for (int i = 0; i < Allowance.DefaultUndos + 2; i++)
+            {
+                yield return PlayMove(tutorial, move);
+                tutorial.Undo();
+                yield return WaitUntilIdle(tutorial);
+            }
+            Assert.AreEqual(0, tutorial.MovesMade, "every undo worked, there was no limit");
+            Assert.IsFalse(tutorial.Hud.UndoInteractable, "nothing left to undo: the board is back at the start");
+
+            tutorial.LoadLevel(LevelCurve.TutorialLevels + 1);
+            yield return null;
+            Assert.IsTrue(tutorial.Hud.RightsVisible, "the counters appear after the tutorial");
+            Assert.AreEqual("5", tutorial.Hud.UndoBadgeText);
+        }
+
         // ---- the candy shop ----
 
         [UnityTest]
@@ -194,55 +219,121 @@ namespace SweetBazaar.Game.PlayTests
         }
 
         [UnityTest]
-        public IEnumerator TheShopCannotBeUpgradedWithoutGold()
+        public IEnumerator TheShopOpensOnAPlaceThatStillHasToBeBuilt()
         {
             var controller = StartGame(6);
             yield return null;
 
             controller.OpenShop();
-            controller.UpgradeShop();
 
-            Assert.AreEqual(0, controller.Shop.Stage);
-            Assert.IsFalse(controller.Hud.UpgradeInteractable);
+            Assert.IsFalse(controller.Shop.IsBuilt(controller.Hud.SelectedShopPlace));
         }
 
         [UnityTest]
-        public IEnumerator TheShopGrowsWhenThereIsEnoughGold()
+        public IEnumerator NothingCanBeBuiltWithoutGold()
         {
             var controller = StartGame(6);
             yield return null;
-            controller.Shop.AddGold(ShopStages.CostOf(1) + 15);
 
             controller.OpenShop();
-            Assert.IsTrue(controller.Hud.UpgradeInteractable);
-            controller.UpgradeShop();
+            controller.Hud.SelectPlace(ShopPlace.Sign);
+            Assert.IsFalse(controller.Hud.ShopActionInteractable, "the build button is disabled without enough gold");
 
-            Assert.AreEqual(1, controller.Shop.Stage);
-            Assert.AreEqual(15, controller.Shop.Gold);
+            controller.ShopAction(ShopPlace.Sign, 0);
+
+            Assert.IsFalse(controller.Shop.IsBuilt(ShopPlace.Sign));
+            Assert.AreEqual(1, controller.Shop.BuiltCount);
+        }
+
+        [UnityTest]
+        public IEnumerator APlaceIsBuiltInTheStyleThePlayerPicksAndPaidFor()
+        {
+            var controller = StartGame(6);
+            yield return null;
+            controller.Shop.AddGold(ShopCatalog.CostOfPurchase(1) + 15);
+
+            controller.OpenShop();
+            controller.Hud.SelectPlace(ShopPlace.Sign);
+            controller.Hud.SelectStyle(2);
+            Assert.IsTrue(controller.Hud.ShopActionInteractable);
+            controller.ShopAction(controller.Hud.SelectedShopPlace, controller.Hud.PreviewedShopStyle);
+
+            Assert.IsTrue(controller.Shop.IsBuilt(ShopPlace.Sign));
+            Assert.AreEqual(2, controller.Shop.StyleOf(ShopPlace.Sign), "the style the player picked, not a default");
             Assert.AreEqual("15", controller.Hud.GoldText);
-            Assert.IsTrue(controller.Hud.ShopVisible, "the shop stays open to show the new stage");
+            Assert.IsTrue(controller.Hud.ShopVisible, "the shop stays open to show the result");
         }
 
         [UnityTest]
-        public IEnumerator TheShopStageAndGoldAreRememberedBetweenGames()
+        public IEnumerator PreviewingAStyleChangesNothingUntilThePlayerConfirms()
+        {
+            var controller = StartGame(6);
+            yield return null;
+            controller.Shop.AddGold(1000);
+
+            controller.OpenShop();
+            controller.Hud.SelectPlace(ShopPlace.Display);
+            controller.Hud.SelectStyle(1);
+            controller.Hud.SelectStyle(2);
+            controller.Hud.SelectPlace(ShopPlace.Facade);
+
+            Assert.AreEqual(1, controller.Shop.BuiltCount, "looking around builds nothing");
+            Assert.AreEqual(1000, controller.Shop.Gold, "and costs nothing");
+        }
+
+        [UnityTest]
+        public IEnumerator TheStyleOfABuiltPlaceChangesForFree()
+        {
+            var controller = StartGame(6);
+            yield return null;
+            controller.Shop.AddGold(ShopCatalog.CostOfPurchase(1));
+            controller.OpenShop();
+            controller.ShopAction(ShopPlace.Sign, 0);
+            Assert.AreEqual(0, controller.Shop.Gold);
+
+            controller.Hud.SelectPlace(ShopPlace.Sign);
+            controller.Hud.SelectStyle(1);
+            Assert.IsTrue(controller.Hud.ShopActionInteractable);
+            controller.ShopAction(ShopPlace.Sign, 1);
+
+            Assert.AreEqual(1, controller.Shop.StyleOf(ShopPlace.Sign));
+            Assert.AreEqual(0, controller.Shop.Gold, "changing the style costs nothing");
+        }
+
+        [UnityTest]
+        public IEnumerator WinningALevelNeverBuildsAnythingOnItsOwn()
+        {
+            var controller = StartGame(1);
+            yield return null;
+            foreach (var move in Solution(controller))
+                yield return PlayMove(controller, move);
+
+            Assert.IsTrue(controller.Hud.WinVisible);
+            Assert.Greater(controller.Shop.Gold, 0);
+            Assert.AreEqual(1, controller.Shop.BuiltCount, "the gold is kept until the player decides what to build");
+        }
+
+        [UnityTest]
+        public IEnumerator TheShopIsRememberedBetweenGames()
         {
             // the test touches the real saved values, so it puts them back afterwards
-            string[] keys = { "shop.gold", "shop.stage", "level.current" };
+            string[] keys = { "shop.gold", "shop.styles", "level.current" };
             var hadKey = keys.ToDictionary(k => k, PlayerPrefs.HasKey);
-            int savedGold = PlayerPrefs.GetInt("shop.gold", 0), savedStage = PlayerPrefs.GetInt("shop.stage", 0);
+            int savedGold = PlayerPrefs.GetInt("shop.gold", 0);
+            string savedStyles = PlayerPrefs.GetString("shop.styles", "");
             int savedLevel = PlayerPrefs.GetInt("level.current", 1);
 
             try
             {
                 PlayerPrefs.DeleteKey("shop.gold");
-                PlayerPrefs.DeleteKey("shop.stage");
+                PlayerPrefs.DeleteKey("shop.styles");
                 PlayerPrefs.SetInt("level.current", 1);
 
                 var first = StartGame(0, persist: true);
                 yield return null;
-                first.Shop.AddGold(ShopStages.CostOf(1) + 5);
+                first.Shop.AddGold(ShopCatalog.CostOfPurchase(1) + 5);
                 first.OpenShop();
-                first.UpgradeShop();
+                first.ShopAction(ShopPlace.Facade, 1);
                 Object.Destroy(_bootstrap.gameObject);
                 foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
                     Object.Destroy(camera.gameObject);
@@ -251,13 +342,14 @@ namespace SweetBazaar.Game.PlayTests
                 var second = StartGame(0, persist: true);
                 yield return null;
 
-                Assert.AreEqual(1, second.Shop.Stage);
+                Assert.IsTrue(second.Shop.IsBuilt(ShopPlace.Facade));
+                Assert.AreEqual(1, second.Shop.StyleOf(ShopPlace.Facade));
                 Assert.AreEqual(5, second.Shop.Gold);
             }
             finally
             {
                 if (hadKey["shop.gold"]) PlayerPrefs.SetInt("shop.gold", savedGold); else PlayerPrefs.DeleteKey("shop.gold");
-                if (hadKey["shop.stage"]) PlayerPrefs.SetInt("shop.stage", savedStage); else PlayerPrefs.DeleteKey("shop.stage");
+                if (hadKey["shop.styles"]) PlayerPrefs.SetString("shop.styles", savedStyles); else PlayerPrefs.DeleteKey("shop.styles");
                 if (hadKey["level.current"]) PlayerPrefs.SetInt("level.current", savedLevel); else PlayerPrefs.DeleteKey("level.current");
                 PlayerPrefs.Save();
             }

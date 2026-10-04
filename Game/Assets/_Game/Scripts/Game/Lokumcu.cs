@@ -17,6 +17,9 @@ namespace SweetBazaar.Game
         private readonly RectTransform _waveArm;
         private readonly RectTransform _bubble;
         private readonly Text _bubbleText;
+        private readonly Image _artImage;       // set when real artwork (lokumcu_1.png / lokumcu_2.png) is used
+        private readonly Sprite _art1;
+        private readonly Sprite _art2;
         private readonly UiHost _host;
         private Coroutine _routine;
         private Vector2 _rest = Vector2.zero;
@@ -113,6 +116,22 @@ namespace SweetBazaar.Game
             _bubbleText.resizeTextForBestFit = true;
             _bubbleText.resizeTextMinSize = 24;
             _bubbleText.resizeTextMaxSize = 54;
+
+            // Real artwork replaces the drawn character: two frames (arm down / arm waving) shown in turn.
+            _art1 = ArtLibrary.Find("lokumcu_1");
+            _art2 = ArtLibrary.Find("lokumcu_2");
+            if (_art1 != null)
+            {
+                foreach (Transform part in _body)
+                    part.gameObject.SetActive(false);
+
+                var artRect = UiKit.NewRect("Art", _body);
+                UiKit.Stretch(artRect);
+                _artImage = artRect.gameObject.AddComponent<Image>();
+                _artImage.raycastTarget = false;
+                _artImage.preserveAspect = true;
+                _artImage.sprite = _art1;
+            }
         }
 
         public void SetCheer(string text) => _bubbleText.text = text;
@@ -131,6 +150,8 @@ namespace SweetBazaar.Game
             _root.anchoredPosition = _rest;
             _body.localScale = Vector3.one;
             _waveArm.localRotation = Quaternion.Euler(0f, 0f, -24f);
+            if (_artImage != null)
+                _artImage.sprite = _art2 != null ? _art2 : _art1;
             _bubble.localScale = Vector3.one;
         }
 
@@ -179,6 +200,8 @@ namespace SweetBazaar.Game
                 float bob = Mathf.Sin(waveTime * 6f) * 0.018f;
                 _body.localScale = new Vector3(1f - bob * 0.5f, 1f + bob, 1f);
                 _waveArm.localRotation = Quaternion.Euler(0f, 0f, -24f + Mathf.Sin(waveTime * 9f) * 26f);
+                if (_artImage != null)
+                    _artImage.sprite = (_art2 != null && (int)(waveTime / 0.22f) % 2 == 1) ? _art2 : _art1;
 
                 if (waveTime > bubbleStart)
                 {

@@ -53,7 +53,7 @@ namespace SweetBazaar.Game
             _hud = hud;
             _camera = camera;
             _persist = persist;
-            _shop = persist ? new Shop(GamePrefs.ShopGold, GamePrefs.ShopStage) : new Shop();
+            _shop = persist ? new Shop(GamePrefs.ShopGold, Shop.ParseStyles(GamePrefs.ShopStyles)) : new Shop();
 
             _hud.UndoClicked += Undo;
             _hud.RestartClicked += Restart;
@@ -61,7 +61,7 @@ namespace SweetBazaar.Game
             _hud.NextClicked += NextLevel;
             _hud.LanguageClicked += ToggleLanguage;
             _hud.ShopClicked += OpenShop;
-            _hud.UpgradeClicked += UpgradeShop;
+            _hud.ShopActionClicked += ShopAction;
             _hud.ShopClosed += CloseShop;
             _localizer.LanguageChanged += _hud.RefreshTexts;
         }
@@ -77,7 +77,7 @@ namespace SweetBazaar.Game
             _hud.NextClicked -= NextLevel;
             _hud.LanguageClicked -= ToggleLanguage;
             _hud.ShopClicked -= OpenShop;
-            _hud.UpgradeClicked -= UpgradeShop;
+            _hud.ShopActionClicked -= ShopAction;
             _hud.ShopClosed -= CloseShop;
             _localizer.LanguageChanged -= _hud.RefreshTexts;
         }
@@ -98,7 +98,7 @@ namespace SweetBazaar.Game
             _session = new GameSession(Board.FromLevel(_pack.Get(number).Definition));
             _selected = -1;
             _moves = 0;
-            _allowance = new Allowance();
+            _allowance = Allowance.ForLevel(number);
 
             _hud.HideWin();
             _hud.HideStuck();
@@ -213,15 +213,21 @@ namespace SweetBazaar.Game
 
         public void CloseShop() => _hud.HideShop();
 
-        // Builds the next shop stage if there is enough gold.
-        public void UpgradeShop()
+        // What the player chose in the shop: build the place in that style (if it is not built yet and the gold is there),
+        // or switch an already built place to that style (free). Nothing happens otherwise.
+        public void ShopAction(ShopPlace place, int style)
         {
-            if (!_hud.ShopVisible || !_shop.TryUpgrade())
+            if (!_hud.ShopVisible)
+                return;
+
+            bool alreadyBuilt = _shop.IsBuilt(place);
+            bool done = alreadyBuilt ? _shop.TrySetStyle(place, style) : _shop.TryBuild(place, style);
+            if (!done)
                 return;
 
             SaveShop();
             _hud.SetGold(_shop.Gold);
-            _hud.ShowShop(_shop, justBuilt: true);
+            _hud.ShowShop(_shop, justBuilt: !alreadyBuilt);
         }
 
         private void SaveShop()
@@ -230,7 +236,7 @@ namespace SweetBazaar.Game
                 return;
 
             GamePrefs.ShopGold = _shop.Gold;
-            GamePrefs.ShopStage = _shop.Stage;
+            GamePrefs.ShopStyles = _shop.SerializeStyles();
             GamePrefs.SaveNow();
         }
 
@@ -380,7 +386,7 @@ namespace SweetBazaar.Game
         private void RefreshHud()
         {
             _hud.SetMoves(_moves);
-            _hud.SetRights(_allowance.UndosLeft, _allowance.ExtraBoxesLeft);
+            _hud.SetRights(_allowance.UndosLeft, _allowance.ExtraBoxesLeft, _allowance.IsUnlimited);
 
             // taking back an added box is free, so the button stays usable then even without undos left
             bool undoPossible = _session.CanUndo && (_allowance.CanUndo || _session.NextUndoIsAddedBox);

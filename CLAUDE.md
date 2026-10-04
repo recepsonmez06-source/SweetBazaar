@@ -151,6 +151,10 @@ Oyun tasarımının ayrıntıları `docs/TASARIM.md` dosyasındadır; ona da mut
 - [x] Unity tarafı (E): tahta görünümü, dokunma girişi, animasyonlar, arayüz, ana sahne (`Scenes/Main.unity`);
   ilk oynanabilir sürüm. Yer tutucu (kodla çizilen) görseller; 15 PlayMode + 140 EditMode test geçiyor
   (bkz. TASARIM.md bölüm 13). **Kullanıcı Unity'de `Main` sahnesini açıp Play'e basarak deneyebilir.**
+- [x] **Seçimli dükkân + görsel altyapısı (2026-10-04):** dükkân 6 alan × 3 tarz, oyuncu seçerek kurar (kendiliğinden geçiş yok);
+  ilk 5 bölümde sınırsız hak/rozet yok. Gerçek çizimler `Game/Assets/_Game/Resources/Art/` klasörüne PNG olarak konur
+  (`docs/GORSEL_ISTEK.md`: ad listesi, boyut, yapay zekâ ile üretim yönergesi); yoksa kodla çizilen yer tutucu görünür.
+  EditMode 189 + PlayMode 36 test geçti. **Bekleniyor:** kullanıcı yapay zekâ ile görselleri üretecek; dükkân akışı geri bildirimi.
 - [ ] Sıradaki: ses efektleri/müzik, ayarlar menüsü (dil seçimi), reklam (AdMob test kimlikleriyle), reklam kaldırma satın
   alımı, kayıt/ilerleme iyileştirmeleri, gerçek görseller, Android'de telefonda deneme (APK)
 - [ ] İlk oynanabilir ekran

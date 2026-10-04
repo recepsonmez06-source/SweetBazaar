@@ -116,13 +116,15 @@ Bölüm dosyası (`Game/Assets/_Game/Resources/Levels/levels.json`):
 - **Ölçüm aracı:** `tools\CoreBench` (`dotnet run`) oyun mantığını Unity olmadan derler ve paralel çalışır:
   `build-levels`, `verify-levels`, `difficulty` (zorluk grafiği), `cells` (ayar merdiveni), `curve`.
   Unity editörü açıkken de çalışır.
-## 6. Elde tutma katmanı: Dükkânın büyümesi (taslak)
+## 6. Elde tutma katmanı: Dükkânın büyümesi (seçimli, 2026-10-04)
 
-- Bölüm geçtikçe altın kazanılır.
-- Altınla dükkân geliştirilir: küçük tezgâh → vitrin → tabela → çay köşesi → çarşıda büyük dükkân
-  → tanınmış şekerci.
+- Bölüm geçtikçe altın kazanılır. **Hiçbir şey kendiliğinden kurulmaz**: oyuncu altınla ne yapacağını kendisi seçer
+  (kullanıcı geri bildirimi: "dükkânı geliştir deyip otomatik geçiyorsa kötü, seçenek sunarak geliştirilmeli").
+- Dükkânın **6 alanı** var: Tezgâh, Vitrin, Tabela, Çay köşesi, Dış cephe, Süsler. Her alanın **3 tarzı** var
+  (toplam 18 seçenek). Oyuncu önce alanı, sonra tarzı seçer; resim seçilen tarzı önizler, altın harcanmaz.
+- **Bedel kurulan alan sayısına göre** artar (hangi alan olduğuna göre değil): 60, 150, 350, 800, 1800 altın (tezgâh baştan kurulu).
+  Kurulmuş bir alanın tarzını değiştirmek **ücretsizdir**.
 - Fikir (karar verilmedi): Dükkânda yaşayan, oyuncuya eşlik eden bir kedi maskot.
-
 ## 7. Para kazanma
 
 - **Ödüllü reklam (ana gelir):** Takılınca reklam izleyip ekstra boş kutu veya geri alma hakkı.
@@ -203,15 +205,17 @@ Karar ve davranışlar bu türün (su/top sıralama oyunları) yaygın uygulamal
   rozetle görünür; hak bitince düğme pasifleşir. Eklenmiş ekstra kutuyu geri almak **ücretsizdir** (geri alma hakkı
   harcamaz, ekstra kutu hakkını geri verir). "Yeniden başla" haklar baştan verir. Hak bitince ileride ödüllü reklam izleyerek
   hak kazanılacak (`Allowance.Grant`; reklam bağlantısı sonraki adım). Çözücü/bot zorluk ölçümü hak kullanmaz.
-- **Dükkânın büyümesi (bölüm 6'nın ilk sürümü, 2026-10-04):** Bölüm bitince **altın** kazanılır:
-  `10 + 2 × lokum çeşidi (+5 bonus: geri al/ekstra kutu kullanmadan bitirilirse)`. Altın, ekranın sol üstünde sayaçla ve
-  **Dükkân** düğmesiyle görünür (kazanma ekranından da "Dükkâna git"). Altınla dükkân 6 aşamada büyür (bedel, altın):
-  0 Küçük tezgâh (başlangıç) → 1 Vitrin (60) → 2 Tabela (150) → 3 Çay köşesi (350) → 4 Çarşıda büyük dükkân (800) →
-  5 Tanınmış şekerci (1800). Tempo: ilk geliştirme ~4 bölümde, sonuncusu ~110. bölümde (bir test bunu denetler). Her aşama
-  öncekini korur ve yenisini ekler (tezgâh → camlı vitrin → "Sweet Bazaar" tabelası → çay masası → cepheli büyük dükkân →
-  altın tabela, taç, bayraklar, fenerler, sıra bekleyen müşteriler). Aşama ve altın cihazda saklanır. Dükkân ekranında
-  resim, aşama adı/açıklaması, altın, sıradaki aşama ve "Geliştir" düğmesi bulunur. Görseller yer tutucudur (kodla çizilir).
-- **Lokumcu (bölüm sonu animasyonu, 2026-10-04):** Bölüm kazanılınca kazanma kartında **lokumcu** aşağıdan zıplayarak
+  **İlk 5 bölüm (öğretici, `LevelCurve.TutorialLevels`) sınırsız haktır ve rozet gösterilmez** (yeni oyuncu 5/1 sayılarını anlamıyordu).
+- **Dükkânın büyümesi (seçimli, 2026-10-04):** Bölüm bitince **altın** kazanılır:
+  `10 + 2 × lokum çeşidi (+5 bonus: geri al/ekstra kutu kullanmadan bitirilirse)`. Altın sol üstte sayaçla, **Dükkân**
+  düğmesiyle görünür (kazanma ekranından da "Dükkâna git"). Dükkân ekranı: üstte resim, altında altın ve kurulan alan sayısı,
+  6 alan düğmesi (yeşil nokta = kurulu), seçilen alanın 3 tarz kartı, bilgi satırı ve tek eylem düğmesi
+  ("Kur (N altın)", kuruluysa "Bu tarzı kullan"). Altın yetmezse düğme pasif ve eksik miktar yazılır. Bedel/kurallar: bölüm 6.
+  Tempo: tüm dükkân yaklaşık ilk 110 bölümde kurulur. Seçimler (`shop.gold`, `shop.styles`) cihazda saklanır. Mantık `Core/Shop.cs`.
+- **Görsel altyapısı (2026-10-04):** Gerçek çizimler kodu değiştirmeden eklenir: `Assets/_Game/Resources/Art/<ad>.png`
+  varsa `ArtLibrary` onu kullanır, yoksa kodla çizilen yer tutucu kalır. Ad listesi, boyutlar ve yapay zekâ ile üretim
+  yönergesi `docs/GORSEL_ISTEK.md` dosyasındadır (lokum `candy_NN`, `box_frame`, `box_parcel`, `coin`, `lokumcu_1/2`,
+  `shop_<alan>_<tarz>`, `shop_bg`). Tabeladaki "Sweet Bazaar" yazısını oyun kendisi çizer.- **Lokumcu (bölüm sonu animasyonu, 2026-10-04):** Bölüm kazanılınca kazanma kartında **lokumcu** aşağıdan zıplayarak
   gelir, el sallar, "Aferin!" der; üstten lokumlar yağar ve kazanılan altın sayaçla yukarı sayılır. Yer tutucu çizgi film
   karakteri (fes, bıyık, önlük; kodla çizilir) — gerçek çizim gelince yalnızca `Lokumcu.cs` değişir. Kedi maskot fikri
   (bölüm 6) hâlâ karara bağlanmadı.

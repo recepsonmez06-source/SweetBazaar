@@ -19,7 +19,7 @@ namespace SweetBazaar.Game
         }
 
         private const string GoldKey = "shop.gold";
-        private const string ShopStageKey = "shop.stage";
+        private const string ShopStylesKey = "shop.styles";
 
         public static int ShopGold
         {
@@ -27,10 +27,11 @@ namespace SweetBazaar.Game
             set => PlayerPrefs.SetInt(GoldKey, value);
         }
 
-        public static int ShopStage
+        // The chosen style of every shop place, e.g. "0,-1,2,-1,-1,-1" (see Shop.SerializeStyles).
+        public static string ShopStyles
         {
-            get => Mathf.Max(0, PlayerPrefs.GetInt(ShopStageKey, 0));
-            set => PlayerPrefs.SetInt(ShopStageKey, value);
+            get => PlayerPrefs.GetString(ShopStylesKey, "");
+            set => PlayerPrefs.SetString(ShopStylesKey, value);
         }
 
         public static void SaveNow() => PlayerPrefs.Save();

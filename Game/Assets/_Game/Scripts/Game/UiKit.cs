@@ -83,6 +83,7 @@ namespace SweetBazaar.Game
             if (sprite != null)
             {
                 image.sprite = sprite;
+                image.preserveAspect = true;
             }
             else if (round)
             {
@@ -160,6 +161,15 @@ namespace SweetBazaar.Game
         {
             var root = NewRect(name, parent);
             Place(root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size));
+
+            // real artwork (Resources/Art/coin.png) replaces the drawn coin
+            var art = ArtLibrary.Find("coin");
+            if (art != null)
+            {
+                var picture = Shape(root, "Art", 0, 0, size, size, Color.white, sprite: art);
+                Place(picture.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size));
+                return root;
+            }
 
             var outer = Shape(root, "Outer", 0, 0, size, size, Hex(0xB9811A), round: true);
             Place(outer.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size));
